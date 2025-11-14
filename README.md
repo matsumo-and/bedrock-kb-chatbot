@@ -108,4 +108,6 @@ yarn test       # Jest によるテスト実行
 yarn cdk synth  # CloudFormation テンプレートの生成
 yarn cdk deploy # AWS へのデプロイ
 yarn cdk diff   # 変更内容の確認
+yarn lint       # Biome によるコード検査
+yarn format     # Biome によるコードフォーマット
 ```
