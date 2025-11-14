@@ -1,0 +1,12 @@
+{
+  "recommendations": [
+    // Biome - コードフォーマッターとリンター
+    "biomejs.biome",
+    
+    // その他の推奨拡張機能
+    "bradlc.vscode-tailwindcss",
+    "formulahendry.auto-rename-tag",
+    "steoates.autoimport",
+    "amazonwebservices.aws-toolkit-vscode"
+  ]
+}
