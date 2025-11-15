@@ -1,0 +1,20 @@
+{
+  "folders": [
+    {
+      "path": ".",
+      "name": "root",
+    },
+    {
+      "path": "app",
+    },
+    {
+      "path": "infra",
+    },
+  ],
+  "settings": {
+    "files.exclude": {
+      "app": true,
+      "infra": true,
+    },
+  },
+}
