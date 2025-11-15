@@ -64,6 +64,8 @@ git clone <repository-url>
 cd bedrock-kb-chatbot
 ```
 
+VSCode から [bedrock-kb-chatbot.code-workspace](./bedrock-kb-chatbot.code-workspace) ファイルを開いて、マルチプロジェクト構成でワークスペースを開きます。
+
 ### 2. インフラストラクチャのセットアップ
 
 ```bash
