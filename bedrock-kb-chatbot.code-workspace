@@ -8,6 +8,9 @@
       "path": "app",
     },
     {
+      "path": "web"
+    },
+    {
       "path": "infra",
     },
   ],
