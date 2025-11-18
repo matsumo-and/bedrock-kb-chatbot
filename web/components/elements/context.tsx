@@ -115,7 +115,7 @@ export const Context = ({ className, usage, ...props }: ContextProps) => {
             "inline-flex select-none items-center gap-1 rounded-md text-sm",
             "cursor-pointer bg-background text-foreground",
             "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 outline-none ring-offset-background",
-            className
+            className,
           )}
           type="button"
           {...props}
@@ -173,7 +173,7 @@ export const Context = ({ className, usage, ...props }: ContextProps) => {
                     <span className="min-w-[4ch] text-right" />
                     <span>
                       {Number.isNaN(
-                        Number.parseFloat(usage.costUSD.totalUSD.toString())
+                        Number.parseFloat(usage.costUSD.totalUSD.toString()),
                       )
                         ? "—"
                         : `$${Number.parseFloat(usage.costUSD.totalUSD.toString()).toFixed(6)}`}

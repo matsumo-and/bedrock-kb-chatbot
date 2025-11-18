@@ -58,7 +58,7 @@ test.describe
       const [_, ...rest] = lines;
       const actualNormalized = normalizeStreamData(rest.filter(Boolean));
       const expectedNormalized = normalizeStreamData(
-        TEST_PROMPTS.SKY.OUTPUT_STREAM
+        TEST_PROMPTS.SKY.OUTPUT_STREAM,
       );
 
       expect(actualNormalized).toEqual(expectedNormalized);
@@ -90,7 +90,7 @@ test.describe
       const [chatId] = chatIdsCreatedByAda;
 
       const response = await babbageContext.request.delete(
-        `/api/chat?id=${chatId}`
+        `/api/chat?id=${chatId}`,
       );
       expect(response.status()).toBe(403);
 
@@ -103,7 +103,7 @@ test.describe
       const [chatId] = chatIdsCreatedByAda;
 
       const response = await adaContext.request.delete(
-        `/api/chat?id=${chatId}`
+        `/api/chat?id=${chatId}`,
       );
       expect(response.status()).toBe(200);
 
@@ -115,7 +115,7 @@ test.describe
       adaContext,
     }) => {
       const response = await adaContext.request.get(
-        `/api/chat/${generateUUID()}/stream`
+        `/api/chat/${generateUUID()}/stream`,
       );
       expect(response.status()).toBe(404);
     });
@@ -146,7 +146,7 @@ test.describe
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       const secondRequest = adaContext.request.get(
-        `/api/chat/${chatId}/stream`
+        `/api/chat/${chatId}/stream`,
       );
 
       const [firstResponse, secondResponse] = await Promise.all([
@@ -168,7 +168,7 @@ test.describe
       ]);
 
       expect(firstResponseBody.toString()).toEqual(
-        secondResponseBody.toString()
+        secondResponseBody.toString(),
       );
     });
 
@@ -198,7 +198,7 @@ test.describe
       });
 
       const secondRequest = adaContext.request.get(
-        `/api/chat/${chatId}/stream`
+        `/api/chat/${chatId}/stream`,
       );
 
       const [firstResponse, secondResponse] = await Promise.all([
@@ -254,7 +254,7 @@ test.describe
       await new Promise((resolve) => setTimeout(resolve, 15 * 1000));
       await new Promise((resolve) => setTimeout(resolve, 15_000));
       const secondResponse = await adaContext.request.get(
-        `/api/chat/${chatId}/stream`
+        `/api/chat/${chatId}/stream`,
       );
 
       const secondStatusCode = secondResponse.status();
@@ -293,7 +293,7 @@ test.describe
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       const secondRequest = babbageContext.request.get(
-        `/api/chat/${chatId}/stream`
+        `/api/chat/${chatId}/stream`,
       );
 
       const [firstResponse, secondResponse] = await Promise.all([
@@ -340,7 +340,7 @@ test.describe
       await new Promise((resolve) => setTimeout(resolve, 10 * 1000));
 
       const secondRequest = babbageContext.request.get(
-        `/api/chat/${chatId}/stream`
+        `/api/chat/${chatId}/stream`,
       );
 
       const [firstResponse, secondResponse] = await Promise.all([

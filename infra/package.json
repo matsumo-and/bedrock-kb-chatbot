@@ -9,8 +9,8 @@
     "watch": "tsc -w",
     "test": "jest",
     "cdk": "cdk",
-    "lint": "npx ultracite@latest check",
-    "format": "npx ultracite@latest fix"
+    "lint": "biome check",
+    "format": "biome format --write"
   },
   "devDependencies": {
     "@biomejs/biome": "2.3.6",
@@ -21,17 +21,11 @@
     "lint-staged": "^16.2.6",
     "ts-jest": "^29.4.5",
     "ts-node": "^10.9.2",
-    "typescript": "~5.9.3",
-    "ultracite": "6.3.4"
+    "typescript": "~5.9.3"
   },
   "dependencies": {
     "aws-cdk-lib": "2.225.0",
     "constructs": "^10.4.3"
   },
-  "packageManager": "pnpm@10.22.0",
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx,json,jsonc,css,scss,md,mdx}": [
-      "pnpm dlx ultracite fix"
-    ]
-  }
+  "packageManager": "pnpm@10.22.0"
 }

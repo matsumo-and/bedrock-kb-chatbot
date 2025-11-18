@@ -24,7 +24,7 @@ test.describe
       const documentId = generateUUID();
 
       const response = await adaContext.request.get(
-        `/api/document?id=${documentId}`
+        `/api/document?id=${documentId}`,
       );
       expect(response.status()).toBe(404);
 
@@ -46,7 +46,7 @@ test.describe
         `/api/document?id=${documentId}`,
         {
           data: draftDocument,
-        }
+        },
       );
       expect(response.status()).toBe(200);
 
@@ -60,7 +60,7 @@ test.describe
       const [document] = documentsCreatedByAda;
 
       const response = await adaContext.request.get(
-        `/api/document?id=${document.id}`
+        `/api/document?id=${document.id}`,
       );
       expect(response.status()).toBe(200);
 
@@ -86,7 +86,7 @@ test.describe
         `/api/document?id=${firstDocument.id}`,
         {
           data: draftDocument,
-        }
+        },
       );
       expect(response.status()).toBe(200);
 
@@ -102,7 +102,7 @@ test.describe
       const [firstDocument, secondDocument] = documentsCreatedByAda;
 
       const response = await adaContext.request.get(
-        `/api/document?id=${firstDocument.id}`
+        `/api/document?id=${firstDocument.id}`,
       );
       expect(response.status()).toBe(200);
 
@@ -132,7 +132,7 @@ test.describe
       const [firstDocument] = documentsCreatedByAda;
 
       const response = await adaContext.request.delete(
-        `/api/document?id=${firstDocument.id}`
+        `/api/document?id=${firstDocument.id}`,
       );
       expect(response.status()).toBe(400);
 
@@ -147,7 +147,7 @@ test.describe
       const [firstDocument, secondDocument] = documentsCreatedByAda;
 
       const response = await adaContext.request.delete(
-        `/api/document?id=${firstDocument.id}&timestamp=${firstDocument.createdAt}`
+        `/api/document?id=${firstDocument.id}&timestamp=${firstDocument.createdAt}`,
       );
       expect(response.status()).toBe(200);
 
@@ -164,7 +164,7 @@ test.describe
       const [firstDocument] = documentsCreatedByAda;
 
       const response = await adaContext.request.get(
-        `/api/document?id=${firstDocument.id}`
+        `/api/document?id=${firstDocument.id}`,
       );
       expect(response.status()).toBe(200);
 
@@ -188,7 +188,7 @@ test.describe
         `/api/document?id=${firstDocument.id}`,
         {
           data: draftDocument,
-        }
+        },
       );
       expect(response.status()).toBe(403);
 
@@ -201,7 +201,7 @@ test.describe
       const [firstDocument] = documentsCreatedByAda;
 
       const response = await adaContext.request.get(
-        `/api/document?id=${firstDocument.id}`
+        `/api/document?id=${firstDocument.id}`,
       );
       expect(response.status()).toBe(200);
 

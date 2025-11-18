@@ -46,7 +46,7 @@ export async function createAuthenticatedContext({
   await page.getByRole("button", { name: "Sign Up" }).click();
 
   await expect(page.getByTestId("toast")).toContainText(
-    "Account created successfully!"
+    "Account created successfully!",
   );
 
   const chatPage = new ChatPage(page);

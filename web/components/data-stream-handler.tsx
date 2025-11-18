@@ -6,7 +6,7 @@ import { artifactDefinitions } from "./artifact";
 import { useDataStream } from "./data-stream-provider";
 
 export function DataStreamHandler() {
-  const { dataStream,setDataStream } = useDataStream();
+  const { dataStream, setDataStream } = useDataStream();
 
   const { artifact, setArtifact, setMetadata } = useArtifact();
 
@@ -21,7 +21,7 @@ export function DataStreamHandler() {
     for (const delta of newDeltas) {
       const artifactDefinition = artifactDefinitions.find(
         (currentArtifactDefinition) =>
-          currentArtifactDefinition.kind === artifact.kind
+          currentArtifactDefinition.kind === artifact.kind,
       );
 
       if (artifactDefinition?.onStreamPart) {

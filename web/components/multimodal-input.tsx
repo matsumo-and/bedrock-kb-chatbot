@@ -103,7 +103,7 @@ function PureMultimodalInput({
 
   const [localStorageInput, setLocalStorageInput] = useLocalStorage(
     "input",
-    ""
+    "",
   );
 
   useEffect(() => {
@@ -203,7 +203,7 @@ function PureMultimodalInput({
     () => ({
       usage,
     }),
-    [usage]
+    [usage],
   );
 
   const handleFileChange = useCallback(
@@ -216,7 +216,7 @@ function PureMultimodalInput({
         const uploadPromises = files.map((file) => uploadFile(file));
         const uploadedAttachments = await Promise.all(uploadPromises);
         const successfullyUploadedAttachments = uploadedAttachments.filter(
-          (attachment) => attachment !== undefined
+          (attachment) => attachment !== undefined,
         );
 
         setAttachments((currentAttachments) => [
@@ -229,16 +229,16 @@ function PureMultimodalInput({
         setUploadQueue([]);
       }
     },
-    [setAttachments, uploadFile]
+    [setAttachments, uploadFile],
   );
-  
+
   const handlePaste = useCallback(
     async (event: ClipboardEvent) => {
       const items = event.clipboardData?.items;
       if (!items) return;
 
       const imageItems = Array.from(items).filter((item) =>
-        item.type.startsWith('image/'),
+        item.type.startsWith("image/"),
       );
 
       if (imageItems.length === 0) return;
@@ -246,7 +246,7 @@ function PureMultimodalInput({
       // Prevent default paste behavior for images
       event.preventDefault();
 
-      setUploadQueue((prev) => [...prev, 'Pasted image']);
+      setUploadQueue((prev) => [...prev, "Pasted image"]);
 
       try {
         const uploadPromises = imageItems.map(async (item) => {
@@ -268,8 +268,8 @@ function PureMultimodalInput({
           ...(successfullyUploadedAttachments as Attachment[]),
         ]);
       } catch (error) {
-        console.error('Error uploading pasted images:', error);
-        toast.error('Failed to upload pasted image(s)');
+        console.error("Error uploading pasted images:", error);
+        toast.error("Failed to upload pasted image(s)");
       } finally {
         setUploadQueue([]);
       }
@@ -282,8 +282,8 @@ function PureMultimodalInput({
     const textarea = textareaRef.current;
     if (!textarea) return;
 
-    textarea.addEventListener('paste', handlePaste);
-    return () => textarea.removeEventListener('paste', handlePaste);
+    textarea.addEventListener("paste", handlePaste);
+    return () => textarea.removeEventListener("paste", handlePaste);
   }, [handlePaste]);
 
   return (
@@ -329,7 +329,7 @@ function PureMultimodalInput({
                 key={attachment.url}
                 onRemove={() => {
                   setAttachments((currentAttachments) =>
-                    currentAttachments.filter((a) => a.url !== attachment.url)
+                    currentAttachments.filter((a) => a.url !== attachment.url),
                   );
                   if (fileInputRef.current) {
                     fileInputRef.current.value = "";
@@ -387,7 +387,7 @@ function PureMultimodalInput({
               className="size-8 rounded-full bg-primary text-primary-foreground transition-colors duration-200 hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground"
               disabled={!input.trim() || uploadQueue.length > 0}
               status={status}
-	      data-testid="send-button"
+              data-testid="send-button"
             >
               <ArrowUpIcon size={14} />
             </PromptInputSubmit>
@@ -418,7 +418,7 @@ export const MultimodalInput = memo(
     }
 
     return true;
-  }
+  },
 );
 
 function PureAttachmentsButton({
@@ -464,7 +464,7 @@ function PureModelSelectorCompact({
   }, [selectedModelId]);
 
   const selectedModel = chatModels.find(
-    (model) => model.id === optimisticModelId
+    (model) => model.id === optimisticModelId,
   );
 
   return (
