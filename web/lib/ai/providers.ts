@@ -1,4 +1,5 @@
-import { gateway } from "@ai-sdk/gateway";
+import { bedrock } from "@ai-sdk/amazon-bedrock";
+
 import {
   customProvider,
   extractReasoningMiddleware,
@@ -25,12 +26,12 @@ export const myProvider = isTestEnvironment
     })()
   : customProvider({
       languageModels: {
-        "chat-model": gateway.languageModel("xai/grok-2-vision-1212"),
+        "chat-model": bedrock("jp.anthropic.claude-sonnet-4-5-20250929-v1:0"),
         "chat-model-reasoning": wrapLanguageModel({
-          model: gateway.languageModel("xai/grok-3-mini"),
+          model: bedrock("jp.anthropic.claude-haiku-4-5-20251001-v1:0"),
           middleware: extractReasoningMiddleware({ tagName: "think" }),
         }),
-        "title-model": gateway.languageModel("xai/grok-2-1212"),
-        "artifact-model": gateway.languageModel("xai/grok-2-1212"),
+        "title-model": bedrock("jp.anthropic.claude-sonnet-4-5-20250929-v1:0"),
+        "artifact-model": bedrock("jp.anthropic.claude-sonnet-4-5-20250929-v1:0"),
       },
     });
