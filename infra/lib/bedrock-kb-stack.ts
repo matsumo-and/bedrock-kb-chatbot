@@ -11,10 +11,7 @@ import {
   RemovalPolicy,
 } from "aws-cdk-lib";
 import type { Construct } from "constructs";
-import {
-  type EnvironmentConfig,
-  getConfig,
-} from "./config/environmental_config";
+import { getConfig } from "./config/environmental_config";
 
 interface BedrockKbStackProps extends cdk.StackProps {
   /**
@@ -236,8 +233,8 @@ export class AmazonBedrockKbStack extends cdk.Stack {
     });
 
     // Confluence data source (Preview feature)
-    if (config.bedrockKb.confluence && config.bedrockKb.confluence.secretArn) {
-      const confluenceDataSource = new aws_bedrock.CfnDataSource(
+    if (config.bedrockKb.confluence?.secretArn) {
+      const _confluenceDataSource = new aws_bedrock.CfnDataSource(
         this,
         "ConfluenceDataSource",
         {
