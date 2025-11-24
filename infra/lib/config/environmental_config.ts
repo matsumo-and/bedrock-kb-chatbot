@@ -34,62 +34,6 @@ export interface EnvironmentConfig {
   };
 
   /**
-   * ECSクラスターの設定
-   */
-  ecs: {
-    /**
-     * ECSクラスターの名前
-     */
-    clusterName: string;
-  };
-
-  /**
-   * ECRリポジトリの設定
-   */
-  ecr: {
-    /**
-     * ECRリポジトリの名前
-     */
-    repositoryName: string;
-    /**
-     * ライフサイクルルールで保持する最大イメージ数
-     */
-    lifecycleMaxImageCount: number;
-  };
-
-  /**
-   * サービスの設定（複数サービスに対応）
-   */
-  services: {
-    [serviceName: string]: {
-      /**
-       * サービスの名前
-       */
-      name: string;
-      /**
-       * タスクのCPU単位
-       */
-      cpu: number;
-      /**
-       * タスクのメモリ（MB）
-       */
-      memory: number;
-      /**
-       * 起動するタスクの希望数
-       */
-      desiredCount: number;
-      /**
-       * ALBリスナールールの優先度
-       */
-      priority: number;
-      /**
-       * パスベースルーティングのパターン
-       */
-      pathPattern?: string;
-    };
-  };
-
-  /**
    * Bedrock Knowledge Base の設定
    */
   bedrockKb?: {
@@ -143,65 +87,11 @@ export const environmentConfigs: { [key: string]: EnvironmentConfig } = {
       cidr: "10.0.0.0/16",
       maxAzs: 2,
     },
-    ecs: {
-      clusterName: "dev-ecs-cluster",
-    },
-    ecr: {
-      repositoryName: "dev-app",
-      lifecycleMaxImageCount: 5,
-    },
-    services: {
-      api: {
-        name: "dev-api-service",
-        cpu: 256,
-        memory: 512,
-        desiredCount: 1,
-        priority: 100,
-        pathPattern: "/api/*",
-      },
-    },
     bedrockKb: {
       embeddingModelArn:
         "arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-embed-text-v2:0",
       aurora: {
         instanceType: "t3.medium",
-        version: "15.4",
-      },
-      confluence: {
-        secretArn: "", // 環境変数から設定: process.env.CONFLUENCE_SECRET_ARN
-        hostUrl: "https://your-domain.atlassian.net", // 環境変数から設定: process.env.CONFLUENCE_HOST_URL
-        spaces: ["*"],
-      },
-    },
-  },
-  prod: {
-    envName: "prod",
-    vpc: {
-      cidr: "10.1.0.0/16",
-      maxAzs: 3,
-    },
-    ecs: {
-      clusterName: "prod-ecs-cluster",
-    },
-    ecr: {
-      repositoryName: "prod-app",
-      lifecycleMaxImageCount: 20,
-    },
-    services: {
-      api: {
-        name: "prod-api-service",
-        cpu: 512,
-        memory: 1024,
-        desiredCount: 2,
-        priority: 100,
-        pathPattern: "/api/*",
-      },
-    },
-    bedrockKb: {
-      embeddingModelArn:
-        "arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-embed-text-v2:0",
-      aurora: {
-        instanceType: "r5.large",
         version: "15.4",
       },
       confluence: {
