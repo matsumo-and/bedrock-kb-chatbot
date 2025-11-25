@@ -22,7 +22,7 @@ const env = {
 const networkStack = new NetworkStack(app, `NetworkStack${stagePrefix}`, {
   envName: stage,
   config,
-  env
+  env,
 });
 
 // Bedrock Knowledge Base スタック

@@ -228,8 +228,10 @@ export class AmazonBedrockKbStack extends cdk.Stack {
           description: "Confluence credentials for Bedrock Knowledge Base",
           generateSecretString: {
             secretStringTemplate: JSON.stringify({
-              username: "REPLACE_WITH_CONFLUENCE_USERNAME",
-              password: "REPLACE_WITH_CONFLUENCE_API_TOKEN",
+              confluenceAppKey: config.bedrockKb.confluence.confluenceAppKey,
+              confluenceAppSecret: config.bedrockKb.confluence.confluenceAppSecret,
+              confluenceAccessToken: config.bedrockKb.confluence.confluenceAccessToken,
+              confluenceRefreshToken: config.bedrockKb.confluence.confluenceRefreshToken,
             }),
             generateStringKey: "dummy",
             excludeCharacters: ' "@#$%^&*()_-+={}[]|;:,<>.?/',
@@ -250,8 +252,7 @@ export class AmazonBedrockKbStack extends cdk.Stack {
             type: "CONFLUENCE",
             confluenceConfiguration: {
               sourceConfiguration: {
-                // AuthType は SSM Parameter Store か Secrets Manager で設定
-                authType: "BASIC",
+                authType: "OAUTH2_CLIENT_CREDENTIALS",
                 credentialsSecretArn: confluenceSecret.secretArn,
                 hostType: "SAAS",
                 hostUrl: config.bedrockKb.confluence.hostUrl,

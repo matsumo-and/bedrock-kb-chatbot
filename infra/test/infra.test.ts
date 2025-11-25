@@ -91,9 +91,11 @@ describe("Configuration and Stack Structure", () => {
     );
 
     // getConfig の import がないことを確認
-    expect(stackFileContent).not.toContain('import { getConfig }');
     expect(stackFileContent).not.toContain("import { getConfig }");
-    expect(stackFileContent).not.toContain("from './config/environmental_config'");
+    expect(stackFileContent).not.toContain("import { getConfig }");
+    expect(stackFileContent).not.toContain(
+      "from './config/environmental_config'",
+    );
   });
 
   test("bedrock-kb-stack.ts は EnvironmentConfig 型のみをインポートする", () => {
@@ -103,6 +105,6 @@ describe("Configuration and Stack Structure", () => {
     );
 
     // 型のみのインポートであることを確認
-    expect(stackFileContent).toContain('import type { EnvironmentConfig }');
+    expect(stackFileContent).toContain("import type { EnvironmentConfig }");
   });
 });

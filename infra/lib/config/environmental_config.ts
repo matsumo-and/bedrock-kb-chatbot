@@ -2,7 +2,6 @@
  * 環境設定の型定義
  */
 export interface EnvironmentConfig {
-
   /**
    * VPCの設定
    */
@@ -43,9 +42,21 @@ export interface EnvironmentConfig {
      */
     confluence?: {
       /**
-       * Confluence認証情報のシークレットARN
+       * ConfluenceのClient ID
        */
-      secretArn: string;
+      confluenceAppKey: string;
+      /**
+       * ConfluenceのClient Secret
+       */
+      confluenceAppSecret: string;
+      /**
+       * ConfluenceのAccess Token
+       */
+      confluenceAccessToken: string;
+      /**
+       * ConfluenceのRefresh Token
+       */
+      confluenceRefreshToken: string;
       /**
        * ConfluenceのホストURL
        */
@@ -75,7 +86,10 @@ const environmentConfigs: { [key: string]: EnvironmentConfig } = {
         version: "15.4",
       },
       confluence: {
-        secretArn: process.env.CONFLUENCE_SECRET_ARN ?? "",
+        confluenceAppKey: process.env.CONFLUENCE_APP_KEY ?? "",
+        confluenceAppSecret: process.env.CONFLUENCE_APP_SECRET ?? "",
+        confluenceAccessToken: process.env.CONFLUENCE_ACCESS_TOKEN ?? "",
+        confluenceRefreshToken: process.env.CONFLUENCE_REFRESH_TOKEN ?? "",
         hostUrl: process.env.CONFLUENCE_HOST_URL ?? "",
         spaces: process.env.CONFLUENCE_SPACES?.split(",") || ["*"],
       },
@@ -102,5 +116,5 @@ export function getConfig(environment: string): EnvironmentConfig {
   if (!config) {
     throw new Error(`Unknown environment: ${environment}`);
   }
-  return config
+  return config;
 }
