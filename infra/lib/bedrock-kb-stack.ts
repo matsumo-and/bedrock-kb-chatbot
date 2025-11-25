@@ -11,21 +11,21 @@ import {
   RemovalPolicy,
 } from "aws-cdk-lib";
 import type { Construct } from "constructs";
-import { getConfig } from "./config/environmental_config";
+import type { EnvironmentConfig } from "./config/environmental_config";
 
 interface BedrockKbStackProps extends cdk.StackProps {
   /**
-   * 環境名
+   * 環境設定
    */
-  envName?: string;
+  config: EnvironmentConfig;
 }
 
 export class AmazonBedrockKbStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: BedrockKbStackProps) {
+  constructor(scope: Construct, id: string, props: BedrockKbStackProps) {
     super(scope, id, props);
 
-    const envName = props?.envName || "dev";
-    const config = getConfig(envName);
+    const config = props.config;
+    const envName = config.envName;
 
     if (!config.bedrockKb) {
       throw new Error(

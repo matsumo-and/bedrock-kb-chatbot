@@ -3,21 +3,9 @@
  */
 export interface EnvironmentConfig {
   /**
-   * 環境名（dev, prod など）
+   * 環境名
    */
   envName: string;
-
-  /**
-   * AWSアカウントID
-   * @default - CDK_DEFAULT_ACCOUNT環境変数を使用
-   */
-  account?: string;
-
-  /**
-   * AWSリージョン
-   * @default - CDK_DEFAULT_REGION環境変数を使用
-   */
-  region?: string;
 
   /**
    * VPCの設定
@@ -77,9 +65,8 @@ export interface EnvironmentConfig {
 /**
  * 環境別の設定を生成する関数
  */
-const environmentConfigs: { [key: string]: EnvironmentConfig } = {
+const environmentConfigs: { [key: string]: Omit<EnvironmentConfig, "envName"> } = {
   dev: {
-    envName: "dev",
     vpc: {
       cidr: "10.0.0.0/16",
       maxAzs: 2,
@@ -111,6 +98,7 @@ const environmentConfigs: { [key: string]: EnvironmentConfig } = {
  * ```typescript
  * const config = getConfig('dev');
  * console.log(config.vpc.cidr); // '10.0.0.0/16'
+ * console.log(config.envName); // 'dev'
  * ```
  */
 export function getConfig(environment: string): EnvironmentConfig {
@@ -118,5 +106,8 @@ export function getConfig(environment: string): EnvironmentConfig {
   if (!config) {
     throw new Error(`Unknown environment: ${environment}`);
   }
-  return config;
+  return {
+    ...config,
+    envName: environment,
+  };
 }
