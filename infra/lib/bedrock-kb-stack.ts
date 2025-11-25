@@ -233,7 +233,32 @@ export class AmazonBedrockKbStack extends cdk.Stack {
     });
 
     // Confluence data source (Preview feature)
-    if (config.bedrockKb.confluence?.secretArn) {
+    if (
+      config.bedrockKb.confluence?.hostUrl &&
+      config.bedrockKb.confluence.hostUrl !==
+        "https://your-domain.atlassian.net"
+    ) {
+      // Create Confluence credentials secret
+      const confluenceSecret = new aws_secretsmanager.Secret(
+        this,
+        "ConfluenceSecret",
+        {
+          secretName: `${tag}-confluence-credentials`,
+          description: "Confluence credentials for Bedrock Knowledge Base",
+          generateSecretString: {
+            secretStringTemplate: JSON.stringify({
+              username: "REPLACE_WITH_CONFLUENCE_USERNAME",
+              password: "REPLACE_WITH_CONFLUENCE_API_TOKEN",
+            }),
+            generateStringKey: "dummy",
+            excludeCharacters: ' "@#$%^&*()_-+={}[]|;:,<>.?/',
+          },
+        },
+      );
+
+      // Grant read access to the knowledge base role
+      confluenceSecret.grantRead(knowledgeBaseRole);
+
       const _confluenceDataSource = new aws_bedrock.CfnDataSource(
         this,
         "ConfluenceDataSource",
@@ -246,7 +271,7 @@ export class AmazonBedrockKbStack extends cdk.Stack {
               sourceConfiguration: {
                 // AuthType は SSM Parameter Store か Secrets Manager で設定
                 authType: "BASIC",
-                credentialsSecretArn: config.bedrockKb.confluence.secretArn,
+                credentialsSecretArn: confluenceSecret.secretArn,
                 hostType: "SAAS",
                 hostUrl: config.bedrockKb.confluence.hostUrl,
               },
@@ -269,6 +294,18 @@ export class AmazonBedrockKbStack extends cdk.Stack {
           description: "Confluence data source for team documentation",
         },
       );
+
+      // Output for Confluence secret
+      new CfnOutput(this, "ConfluenceSecretArn", {
+        value: confluenceSecret.secretArn,
+        description: "Confluence credentials secret ARN",
+        exportName: `${tag}-confluence-secret-arn`,
+      });
+
+      new CfnOutput(this, "ConfluenceSecretUpdateCommand", {
+        value: `aws secretsmanager update-secret --secret-id ${confluenceSecret.secretArn} --secret-string '{"username":"your-email@example.com","password":"your-confluence-api-token"}'`,
+        description: "Command to update Confluence credentials",
+      });
     }
 
     // VPC Endpoint for Bedrock

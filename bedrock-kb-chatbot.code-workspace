@@ -5,6 +5,9 @@
       "name": "root",
     },
     {
+      "path": "doc"
+    },
+    {
       "path": "web"
     },
     {
@@ -13,6 +16,7 @@
   ],
   "settings": {
     "files.exclude": {
+      "doc": true,
       "web": true,
       "infra": true,
     },

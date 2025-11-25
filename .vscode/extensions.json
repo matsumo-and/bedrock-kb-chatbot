@@ -2,6 +2,9 @@
   "recommendations": [
     // Biome - コードフォーマッターとリンター
     "biomejs.biome",
+
+    // Draw.io editor
+    "hediet.vscode-drawio",
     
     // その他の推奨拡張機能
     "bradlc.vscode-tailwindcss",

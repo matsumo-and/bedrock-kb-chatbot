@@ -75,12 +75,9 @@ export interface EnvironmentConfig {
 }
 
 /**
- * 環境別の設定
- *
- * 各環境（dev, prod）に応じた設定値を定義します。
- * 新しい環境を追加する場合は、このオブジェクトに設定を追加してください。
+ * 環境別の設定を生成する関数
  */
-export const environmentConfigs: { [key: string]: EnvironmentConfig } = {
+const environmentConfigs: { [key: string]: EnvironmentConfig } = {
   dev: {
     envName: "dev",
     vpc: {
@@ -89,15 +86,15 @@ export const environmentConfigs: { [key: string]: EnvironmentConfig } = {
     },
     bedrockKb: {
       embeddingModelArn:
-        "arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-embed-text-v2:0",
+        "arn:aws:bedrock:ap-northeast-1:296062551715:inference-profile/jp.anthropic.claude-sonnet-4-5-20250929-v1:0",
       aurora: {
         instanceType: "t3.medium",
         version: "15.4",
       },
       confluence: {
-        secretArn: "", // 環境変数から設定: process.env.CONFLUENCE_SECRET_ARN
-        hostUrl: "https://your-domain.atlassian.net", // 環境変数から設定: process.env.CONFLUENCE_HOST_URL
-        spaces: ["*"],
+        secretArn: process.env.CONFLUENCE_SECRET_ARN ?? "",
+        hostUrl: process.env.CONFLUENCE_HOST_URL ?? "",
+        spaces: process.env.CONFLUENCE_SPACES?.split(",") || ["*"],
       },
     },
   },
