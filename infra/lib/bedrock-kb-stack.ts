@@ -14,6 +14,7 @@ import type { Construct } from "constructs";
 import type { EnvironmentConfig } from "./config/environmental_config";
 
 interface BedrockKbStackProps extends cdk.StackProps {
+  envName: string;
   /**
    * 環境設定
    */
@@ -25,7 +26,7 @@ export class AmazonBedrockKbStack extends cdk.Stack {
     super(scope, id, props);
 
     const config = props.config;
-    const envName = config.envName;
+    const envName = props.envName;
 
     if (!config.bedrockKb) {
       throw new Error(

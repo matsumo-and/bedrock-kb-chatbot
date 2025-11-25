@@ -6,7 +6,6 @@ import { getConfig } from "../lib/config/environmental_config";
 describe("BedrockKbStack Configuration", () => {
   test("getConfig は環境名を含む設定を返す", () => {
     const config = getConfig("dev");
-    expect(config.envName).toBe("dev");
     expect(config.vpc).toBeDefined();
     expect(config.bedrockKb).toBeDefined();
   });
@@ -20,6 +19,7 @@ describe("BedrockKbStack Configuration", () => {
     const config = getConfig("dev");
 
     const stack = new AmazonBedrockKbStack(app, "TestStack", {
+      envName: "dev",
       config,
     });
 
@@ -36,6 +36,7 @@ describe("BedrockKbStack Configuration", () => {
     const config = getConfig("dev");
 
     const stack = new AmazonBedrockKbStack(app, "TestStack", {
+      envName: "dev",
       config,
     });
 

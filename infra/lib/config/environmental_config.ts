@@ -2,10 +2,6 @@
  * 環境設定の型定義
  */
 export interface EnvironmentConfig {
-  /**
-   * 環境名
-   */
-  envName: string;
 
   /**
    * VPCの設定
@@ -65,7 +61,7 @@ export interface EnvironmentConfig {
 /**
  * 環境別の設定を生成する関数
  */
-const environmentConfigs: { [key: string]: Omit<EnvironmentConfig, "envName"> } = {
+const environmentConfigs: { [key: string]: EnvironmentConfig } = {
   dev: {
     vpc: {
       cidr: "10.0.0.0/16",
@@ -106,8 +102,5 @@ export function getConfig(environment: string): EnvironmentConfig {
   if (!config) {
     throw new Error(`Unknown environment: ${environment}`);
   }
-  return {
-    ...config,
-    envName: environment,
-  };
+  return config
 }

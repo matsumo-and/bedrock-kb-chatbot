@@ -14,6 +14,7 @@ const config = getConfig(env);
 
 // Bedrock Knowledge Base スタック
 new AmazonBedrockKbStack(app, `BedrockKbStack${envPrefix}`, {
+  envName: env,
   config,
   env: {
     account: process.env.CDK_DEFAULT_ACCOUNT,
