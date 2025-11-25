@@ -1,9 +1,10 @@
 import * as cdk from "aws-cdk-lib";
 import { Template } from "aws-cdk-lib/assertions";
 import { AmazonBedrockKbStack } from "../lib/bedrock-kb-stack";
+import { NetworkStack } from "../lib/network-stack";
 import { getConfig } from "../lib/config/environmental_config";
 
-describe("BedrockKbStack Configuration", () => {
+describe("Configuration and Stack Structure", () => {
   test("getConfig は環境名を含む設定を返す", () => {
     const config = getConfig("dev");
     expect(config.vpc).toBeDefined();
@@ -14,33 +15,60 @@ describe("BedrockKbStack Configuration", () => {
     expect(() => getConfig("unknown")).toThrow("Unknown environment: unknown");
   });
 
-  test("スタックは config を通じて設定を受け取る", () => {
+  test("NetworkStack は VPC を作成する", () => {
     const app = new cdk.App();
     const config = getConfig("dev");
 
-    const stack = new AmazonBedrockKbStack(app, "TestStack", {
+    const networkStack = new NetworkStack(app, "TestNetworkStack", {
       envName: "dev",
       config,
     });
 
-    const template = Template.fromStack(stack);
+    const template = Template.fromStack(networkStack);
 
     // VPCが作成されることを確認
     template.resourceCountIs("AWS::EC2::VPC", 1);
-    // Knowledge Baseが作成されることを確認
-    template.resourceCountIs("AWS::Bedrock::KnowledgeBase", 1);
   });
 
-  test("スタックコンストラクタは config.envName を使用する", () => {
+  test("BedrockKbStack は NetworkStack から VPC を受け取る", () => {
     const app = new cdk.App();
     const config = getConfig("dev");
 
-    const stack = new AmazonBedrockKbStack(app, "TestStack", {
+    const networkStack = new NetworkStack(app, "TestNetworkStack", {
       envName: "dev",
       config,
     });
 
-    const template = Template.fromStack(stack);
+    const bedrockStack = new AmazonBedrockKbStack(app, "TestBedrockStack", {
+      envName: "dev",
+      config,
+      vpc: networkStack.vpc,
+    });
+
+    const bedrockTemplate = Template.fromStack(bedrockStack);
+
+    // BedrockKbStackではVPCを作成しないことを確認
+    bedrockTemplate.resourceCountIs("AWS::EC2::VPC", 0);
+    // Knowledge Baseが作成されることを確認
+    bedrockTemplate.resourceCountIs("AWS::Bedrock::KnowledgeBase", 1);
+  });
+
+  test("スタックコンストラクタは envName を使用する", () => {
+    const app = new cdk.App();
+    const config = getConfig("dev");
+
+    const networkStack = new NetworkStack(app, "TestNetworkStack", {
+      envName: "dev",
+      config,
+    });
+
+    const bedrockStack = new AmazonBedrockKbStack(app, "TestBedrockStack", {
+      envName: "dev",
+      config,
+      vpc: networkStack.vpc,
+    });
+
+    const template = Template.fromStack(bedrockStack);
     const templateJson = template.toJSON();
 
     // S3バケットのリソースを取得

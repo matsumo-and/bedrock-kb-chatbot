@@ -19,6 +19,10 @@ interface BedrockKbStackProps extends cdk.StackProps {
    * 環境設定
    */
   config: EnvironmentConfig;
+  /**
+   * VPC (NetworkStackから渡される)
+   */
+  vpc: aws_ec2.IVpc;
 }
 
 export class AmazonBedrockKbStack extends cdk.Stack {
@@ -27,6 +31,7 @@ export class AmazonBedrockKbStack extends cdk.Stack {
 
     const config = props.config;
     const envName = props.envName;
+    const vpc = props.vpc;
 
     if (!config.bedrockKb) {
       throw new Error(
@@ -37,31 +42,6 @@ export class AmazonBedrockKbStack extends cdk.Stack {
     const tag = `bedrock-kb-${envName}`;
     const bucketName = `${tag}-${this.account}`;
     const embeddingModelArn = config.bedrockKb.embeddingModelArn;
-
-    // VPC の作成
-    const vpc = new aws_ec2.Vpc(this, "BedrockKbVpc", {
-      vpcName: `${tag}-vpc`,
-      ipAddresses: aws_ec2.IpAddresses.cidr(config.vpc.cidr),
-      maxAzs: config.vpc.maxAzs,
-      natGateways: 1,
-      subnetConfiguration: [
-        {
-          cidrMask: 24,
-          name: "public",
-          subnetType: aws_ec2.SubnetType.PUBLIC,
-        },
-        {
-          cidrMask: 24,
-          name: "private",
-          subnetType: aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-        },
-        {
-          cidrMask: 24,
-          name: "isolated",
-          subnetType: aws_ec2.SubnetType.PRIVATE_ISOLATED,
-        },
-      ],
-    });
 
     // Aurora PostgreSQL 用のセキュリティグループ
     const auroraSecurityGroup = new aws_ec2.SecurityGroup(
@@ -344,12 +324,6 @@ export class AmazonBedrockKbStack extends cdk.Stack {
       value: dataSourceBucket.bucketName,
       description: "S3 bucket name for data sources",
       exportName: `${tag}-s3-bucket`,
-    });
-
-    new CfnOutput(this, "VpcId", {
-      value: vpc.vpcId,
-      description: "VPC ID for Bedrock KB infrastructure",
-      exportName: `${tag}-vpc-id`,
     });
 
     new CfnOutput(this, "AuroraClusterEndpoint", {

@@ -62,7 +62,7 @@ export interface EnvironmentConfig {
  * 環境別の設定を生成する関数
  */
 const environmentConfigs: { [key: string]: EnvironmentConfig } = {
-  dev: {
+  test: {
     vpc: {
       cidr: "10.0.0.0/16",
       maxAzs: 2,
