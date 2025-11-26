@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm test -- config-isolation.test.ts)"
+      "Bash(npm test -- config-isolation.test.ts)",
+      "Bash(npm run lint)",
+      "Bash(npm run lint -- --write)",
+      "Bash(npm run lint -- --write --unsafe)"
     ],
     "deny": [],
     "ask": []

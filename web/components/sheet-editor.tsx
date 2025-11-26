@@ -3,7 +3,7 @@
 import { useTheme } from "next-themes";
 import { parse, unparse } from "papaparse";
 import { memo, useEffect, useMemo, useState } from "react";
-import { textEditor, DataGrid } from "react-data-grid";
+import { DataGrid, textEditor } from "react-data-grid";
 import { cn } from "@/lib/utils";
 
 import "react-data-grid/lib/styles.css";
@@ -72,7 +72,7 @@ const PureSpreadsheetEditor = ({ content, saveContent }: SheetEditorProps) => {
 
   const initialRows = useMemo(() => {
     return parseData.map((row, rowIndex) => {
-      const rowData: any = {
+      const rowData: Record<string, string | number> = {
         id: rowIndex,
         rowNumber: rowIndex + 1,
       };
@@ -85,17 +85,20 @@ const PureSpreadsheetEditor = ({ content, saveContent }: SheetEditorProps) => {
     });
   }, [parseData, columns]);
 
-  const [localRows, setLocalRows] = useState(initialRows);
+  const [localRows, setLocalRows] =
+    useState<Array<Record<string, string | number>>>(initialRows);
 
   useEffect(() => {
     setLocalRows(initialRows);
   }, [initialRows]);
 
-  const generateCsv = (data: any[][]) => {
+  const generateCsv = (data: unknown[][]) => {
     return unparse(data);
   };
 
-  const handleRowsChange = (newRows: any[]) => {
+  const handleRowsChange = (
+    newRows: Array<Record<string, string | number>>,
+  ) => {
     setLocalRows(newRows);
 
     const updatedData = newRows.map((row) => {

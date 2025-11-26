@@ -16,7 +16,6 @@ declare module "next-auth" {
     } & DefaultSession["user"];
   }
 
-  // biome-ignore lint/nursery/useConsistentTypeDefinitions: "Required"
   interface User {
     id?: string;
     email?: string | null;
@@ -41,7 +40,13 @@ export const {
   providers: [
     Credentials({
       credentials: {},
-      async authorize({ email, password }: any) {
+      async authorize({
+        email,
+        password,
+      }: {
+        email: string;
+        password: string;
+      }) {
         const users = await getUser(email);
 
         if (users.length === 0) {

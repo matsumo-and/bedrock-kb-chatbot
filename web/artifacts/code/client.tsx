@@ -193,7 +193,7 @@ export const codeArtifact = new Artifact<"code", Metadata>({
               },
             ],
           }));
-        } catch (error: any) {
+        } catch (error: unknown) {
           setMetadata((metadata) => ({
             ...metadata,
             outputs: [

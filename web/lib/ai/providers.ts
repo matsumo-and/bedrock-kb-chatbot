@@ -32,6 +32,8 @@ export const myProvider = isTestEnvironment
           middleware: extractReasoningMiddleware({ tagName: "think" }),
         }),
         "title-model": bedrock("jp.anthropic.claude-sonnet-4-5-20250929-v1:0"),
-        "artifact-model": bedrock("jp.anthropic.claude-sonnet-4-5-20250929-v1:0"),
+        "artifact-model": bedrock(
+          "jp.anthropic.claude-sonnet-4-5-20250929-v1:0",
+        ),
       },
     });
