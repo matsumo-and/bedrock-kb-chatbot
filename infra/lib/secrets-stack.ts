@@ -1,7 +1,6 @@
 import * as cdk from "aws-cdk-lib";
 import { aws_secretsmanager, CfnOutput } from "aws-cdk-lib";
 import type { Construct } from "constructs";
-import type { EnvironmentConfig } from "./config/environmental_config";
 
 interface SecretsStackProps extends cdk.StackProps {
   envName: string;
@@ -57,7 +56,6 @@ export class SecretsStack extends cdk.Stack {
             confluenceAccessToken: confluence.confluenceAccessToken,
             confluenceRefreshToken: confluence.confluenceRefreshToken,
           }),
-          generateStringKey: "dummy",
           excludeCharacters: ' "@#$%^&*()_-+={}[]|;:,<>.?/',
         },
       },

@@ -22,7 +22,6 @@ export class NetworkStack extends cdk.Stack {
       vpcName: `${tag}-vpc`,
       ipAddresses: aws_ec2.IpAddresses.cidr(config.vpc.cidr),
       maxAzs: config.vpc.maxAzs,
-      natGateways: 1,
       subnetConfiguration: [
         {
           cidrMask: 24,
@@ -33,11 +32,6 @@ export class NetworkStack extends cdk.Stack {
           cidrMask: 24,
           name: "private",
           subnetType: aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-        },
-        {
-          cidrMask: 24,
-          name: "isolated",
-          subnetType: aws_ec2.SubnetType.PRIVATE_ISOLATED,
         },
       ],
     });
