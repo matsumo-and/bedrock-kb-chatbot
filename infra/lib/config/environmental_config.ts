@@ -83,7 +83,7 @@ const environmentConfigs: { [key: string]: EnvironmentConfig } = {
         "arn:aws:bedrock:ap-northeast-1:296062551715:inference-profile/jp.anthropic.claude-sonnet-4-5-20250929-v1:0",
       aurora: {
         instanceType: "t3.medium",
-        version: "15.4",
+        version: "16.4",
       },
       confluence: {
         confluenceAppKey: process.env.CONFLUENCE_APP_KEY ?? "",
@@ -91,7 +91,7 @@ const environmentConfigs: { [key: string]: EnvironmentConfig } = {
         confluenceAccessToken: process.env.CONFLUENCE_ACCESS_TOKEN ?? "",
         confluenceRefreshToken: process.env.CONFLUENCE_REFRESH_TOKEN ?? "",
         hostUrl: process.env.CONFLUENCE_HOST_URL ?? "",
-        spaces: process.env.CONFLUENCE_SPACES?.split(",") || ["*"],
+        spaces: process.env.CONFLUENCE_SPACES?.split(",") || [],
       },
     },
   },
@@ -100,7 +100,7 @@ const environmentConfigs: { [key: string]: EnvironmentConfig } = {
 /**
  * 指定された環境の設定を取得する
  *
- * @param environment - 環境名（'dev', 'prod' など）
+ * @param stage - 環境名（'dev', 'prod' など）
  * @returns 指定された環境の設定
  * @throws 指定された環境が存在しない場合はエラー
  *
@@ -111,10 +111,10 @@ const environmentConfigs: { [key: string]: EnvironmentConfig } = {
  * console.log(config.envName); // 'dev'
  * ```
  */
-export function getConfig(environment: string): EnvironmentConfig {
-  const config = environmentConfigs[environment];
+export function getConfig(stage: string): EnvironmentConfig {
+  const config = environmentConfigs[stage];
   if (!config) {
-    throw new Error(`Unknown environment: ${environment}`);
+    throw new Error(`Unknown environment: ${stage}`);
   }
   return config;
 }
