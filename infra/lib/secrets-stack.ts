@@ -1,5 +1,5 @@
 import * as cdk from "aws-cdk-lib";
-import { aws_secretsmanager, CfnOutput } from "aws-cdk-lib";
+import { aws_secretsmanager, CfnOutput, SecretValue } from "aws-cdk-lib";
 import type { Construct } from "constructs";
 
 interface SecretsStackProps extends cdk.StackProps {
@@ -66,14 +66,19 @@ export class SecretsStack extends cdk.Stack {
         {
           secretName: `${tag}-confluence-credentials`,
           description: "Confluence credentials for Bedrock Knowledge Base",
-          generateSecretString: {
-            secretStringTemplate: JSON.stringify({
-              confluenceAppKey: confluence.confluenceAppKey ?? "",
-              confluenceAppSecret: confluence.confluenceAppSecret ?? "",
-              confluenceAccessToken: confluence.confluenceAccessToken ?? "",
-              confluenceRefreshToken: confluence.confluenceRefreshToken ?? "",
-            }),
-            excludeCharacters: ' "@#$%^&*()_-+={}[]|;:,<>.?/',
+          secretObjectValue: {
+            confluenceAppKey: SecretValue.unsafePlainText(
+              confluence.confluenceAppKey ?? "",
+            ),
+            confluenceAppSecret: SecretValue.unsafePlainText(
+              confluence.confluenceAppSecret ?? "",
+            ),
+            confluenceAccessToken: SecretValue.unsafePlainText(
+              confluence.confluenceAccessToken ?? "",
+            ),
+            confluenceRefreshToken: SecretValue.unsafePlainText(
+              confluence.confluenceRefreshToken ?? "",
+            ),
           },
         },
       );

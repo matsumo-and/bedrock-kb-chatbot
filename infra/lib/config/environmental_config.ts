@@ -1,3 +1,7 @@
+import * as dotenv from "dotenv";
+
+dotenv.config();
+
 /**
  * 環境設定の型定義
  */
@@ -80,7 +84,7 @@ const environmentConfigs: { [key: string]: EnvironmentConfig } = {
     },
     bedrockKb: {
       embeddingModelArn:
-        "arn:aws:bedrock:ap-northeast-1:296062551715:inference-profile/jp.anthropic.claude-sonnet-4-5-20250929-v1:0",
+        "arn:aws:bedrock:ap-northeast-1::foundation-model/amazon.titan-embed-text-v1",
       aurora: {
         instanceType: "t3.medium",
         version: "16.4",

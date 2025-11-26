@@ -1,9 +1,12 @@
 #!/usr/bin/env node
 import * as cdk from "aws-cdk-lib";
+import * as dotenv from "dotenv";
 import { AmazonBedrockKbStack } from "../lib/bedrock-kb-stack";
+import { getConfig } from "../lib/config/environmental_config";
 import { NetworkStack } from "../lib/network-stack";
 import { SecretsStack } from "../lib/secrets-stack";
-import { getConfig } from "../lib/config/environmental_config";
+
+dotenv.config();
 
 const app = new cdk.App();
 
