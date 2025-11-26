@@ -17,9 +17,25 @@ jobs:
       run:
         shell: bash
         working-directory: web
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: bedrock_kb_chatbot
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     env:
-      AUTH_SECRET: dummy
-      POSTGRES_URL: dummy
+      AUTH_SECRET: test-secret-for-ci
+      POSTGRES_URL: postgres://postgres:postgres@localhost:5432/bedrock_kb_chatbot
 
     steps:
       - uses: actions/checkout@v4
@@ -68,6 +84,9 @@ jobs:
       - name: Install Playwright Browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run database migrations
+        run: pnpm db:migrate
 
       - name: Run Playwright tests
         run: pnpm test

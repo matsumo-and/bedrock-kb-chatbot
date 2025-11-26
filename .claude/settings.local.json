@@ -4,7 +4,9 @@
       "Bash(npm test -- config-isolation.test.ts)",
       "Bash(npm run lint)",
       "Bash(npm run lint -- --write)",
-      "Bash(npm run lint -- --write --unsafe)"
+      "Bash(npm run lint -- --write --unsafe)",
+      "Bash(pnpm test)",
+      "Bash(pnpm exec playwright install chromium)"
     ],
     "deny": [],
     "ask": []
