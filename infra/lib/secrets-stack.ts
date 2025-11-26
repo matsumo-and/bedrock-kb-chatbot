@@ -3,7 +3,7 @@ import { aws_secretsmanager, CfnOutput } from "aws-cdk-lib";
 import type { Construct } from "constructs";
 
 interface SecretsStackProps extends cdk.StackProps {
-  envName: string;
+  stage: string;
   confluence: {
     confluenceAppKey?: string;
     confluenceAppSecret?: string;
@@ -19,8 +19,8 @@ export class SecretsStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: SecretsStackProps) {
     super(scope, id, props);
 
-    const { envName, confluence } = props;
-    const tag = `bedrock-kb-${envName}`;
+    const { stage, confluence } = props;
+    const tag = `bedrock-kb-${stage}`;
 
     // Aurora PostgreSQL のパスワード用シークレット
     const auroraSecret = new aws_secretsmanager.Secret(this, "AuroraSecret", {

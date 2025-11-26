@@ -4,7 +4,7 @@ import type { Construct } from "constructs";
 import type { EnvironmentConfig } from "./config/environmental_config";
 
 interface NetworkStackProps extends cdk.StackProps {
-  envName: string;
+  stage: string;
   config: EnvironmentConfig;
 }
 
@@ -14,8 +14,8 @@ export class NetworkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: NetworkStackProps) {
     super(scope, id, props);
 
-    const { envName, config } = props;
-    const tag = `bedrock-kb-${envName}`;
+    const { stage, config } = props;
+    const tag = `bedrock-kb-${stage}`;
 
     // VPC の作成
     this.vpc = new aws_ec2.Vpc(this, "BedrockKbVpc", {

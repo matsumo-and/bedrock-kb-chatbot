@@ -14,7 +14,7 @@ import type { Construct } from "constructs";
 import type { EnvironmentConfig } from "./config/environmental_config";
 
 interface BedrockKbStackProps extends cdk.StackProps {
-  envName: string;
+  stage: string;
   /**
    * 環境設定
    */
@@ -38,16 +38,16 @@ export class AmazonBedrockKbStack extends cdk.Stack {
     super(scope, id, props);
 
     const config = props.config;
-    const envName = props.envName;
+    const stage = props.stage;
     const vpc = props.vpc;
 
     if (!config.bedrockKb) {
       throw new Error(
-        `Bedrock KB configuration is not defined for environment: ${envName}`,
+        `Bedrock KB configuration is not defined for environment: ${stage}`,
       );
     }
 
-    const tag = `bedrock-kb-${envName}`;
+    const tag = `bedrock-kb-${stage}`;
     const bucketName = `${tag}-${this.account}`;
     const embeddingModelArn = config.bedrockKb.embeddingModelArn;
 
@@ -196,7 +196,7 @@ export class AmazonBedrockKbStack extends cdk.Stack {
             },
           },
         },
-        description: `Knowledge base for ${envName} environment with Aurora PostgreSQL`,
+        description: `Knowledge base for ${stage} environment with Aurora PostgreSQL`,
       },
     );
 
