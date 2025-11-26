@@ -77,10 +77,7 @@ describe("Config Isolation Tests", () => {
         }
 
         // getConfigの呼び出しをチェック（importは除外）
-        const { found, matches } = checkFileForPattern(
-          file,
-          /getConfig\s*\(/,
-        );
+        const { found, matches } = checkFileForPattern(file, /getConfig\s*\(/);
 
         if (found) {
           violations.push({
@@ -92,10 +89,7 @@ describe("Config Isolation Tests", () => {
 
       if (violations.length > 0) {
         const errorMessage = violations
-          .map(
-            (v) =>
-              `\n  File: ${v.file}\n    ${v.matches.join("\n    ")}`,
-          )
+          .map((v) => `\n  File: ${v.file}\n    ${v.matches.join("\n    ")}`)
           .join("\n");
 
         throw new Error(
@@ -137,10 +131,7 @@ describe("Config Isolation Tests", () => {
 
       if (violations.length > 0) {
         const errorMessage = violations
-          .map(
-            (v) =>
-              `\n  File: ${v.file}\n    ${v.matches.join("\n    ")}`,
-          )
+          .map((v) => `\n  File: ${v.file}\n    ${v.matches.join("\n    ")}`)
           .join("\n");
 
         throw new Error(
@@ -247,12 +238,14 @@ describe("Config Isolation Tests", () => {
       const content = fs.readFileSync(entryPoint, "utf-8");
 
       // config.vpc.cidr のような個別の値の参照があることを確認
-      const hasIndividualAccess =
-        /config\.vpc\.cidr|config\.bedrockKb/.test(content);
+      const hasIndividualAccess = /config\.vpc\.cidr|config\.bedrockKb/.test(
+        content,
+      );
 
       // `config,` や `config: config` のような config オブジェクト全体の受け渡しがないことを確認
-      const hasDirectConfigPass =
-        /,\s*config\s*[,}]|config:\s*config/.test(content);
+      const hasDirectConfigPass = /,\s*config\s*[,}]|config:\s*config/.test(
+        content,
+      );
 
       expect(hasIndividualAccess).toBe(true);
       expect(hasDirectConfigPass).toBe(false);
