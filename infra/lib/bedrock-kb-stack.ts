@@ -23,6 +23,14 @@ interface BedrockKbStackProps extends cdk.StackProps {
    * VPC (NetworkStackから渡される)
    */
   vpc: aws_ec2.IVpc;
+  /**
+   * Aurora Secret ARN (SecretsStackから渡される)
+   */
+  auroraSecretArn: string;
+  /**
+   * Confluence Secret ARN (SecretsStackから渡される、オプショナル)
+   */
+  confluenceSecretArn?: string;
 }
 
 export class AmazonBedrockKbStack extends cdk.Stack {
@@ -61,21 +69,17 @@ export class AmazonBedrockKbStack extends cdk.Stack {
       "Allow PostgreSQL connections from VPC",
     );
 
-    // Aurora PostgreSQL のパスワード用シークレット
-    const dbSecret = new aws_secretsmanager.Secret(this, "AuroraSecret", {
-      secretName: `${tag}-aurora-secret`,
-      generateSecretString: {
-        secretStringTemplate: JSON.stringify({ username: "postgres" }),
-        generateStringKey: "password",
-        excludeCharacters: ' "@#$%^&*()_-+={}[]|;:,<>.?/',
-        passwordLength: 32,
-      },
-    });
+    // Aurora PostgreSQL のパスワード用シークレット (SecretsStackから渡される)
+    const dbSecret = aws_secretsmanager.Secret.fromSecretCompleteArn(
+      this,
+      "AuroraSecret",
+      props.auroraSecretArn,
+    );
 
     // Aurora PostgreSQL クラスター
     const auroraCluster = new aws_rds.DatabaseCluster(this, "AuroraCluster", {
       engine: aws_rds.DatabaseClusterEngine.auroraPostgres({
-        version: aws_rds.AuroraPostgresEngineVersion.VER_15_4,
+        version: aws_rds.AuroraPostgresEngineVersion.VER_16_9,
       }),
       clusterIdentifier: `${tag}-aurora-cluster`,
       credentials: aws_rds.Credentials.fromSecret(dbSecret),
@@ -213,80 +217,47 @@ export class AmazonBedrockKbStack extends cdk.Stack {
       description: "S3 data source for documents and knowledge files",
     });
 
-    // Confluence data source (Preview feature)
-    if (
-      config.bedrockKb.confluence?.hostUrl &&
-      config.bedrockKb.confluence.hostUrl !==
-        "https://your-domain.atlassian.net"
-    ) {
-      // Create Confluence credentials secret
-      const confluenceSecret = new aws_secretsmanager.Secret(
+    // Confluence data source (if secret ARN is provided)
+    if (props.confluenceSecretArn && config.bedrockKb.confluence?.hostUrl) {
+      // Reference the existing secret from SecretsStack
+      const confluenceSecret = aws_secretsmanager.Secret.fromSecretCompleteArn(
         this,
         "ConfluenceSecret",
-        {
-          secretName: `${tag}-confluence-credentials`,
-          description: "Confluence credentials for Bedrock Knowledge Base",
-          generateSecretString: {
-            secretStringTemplate: JSON.stringify({
-              confluenceAppKey: config.bedrockKb.confluence.confluenceAppKey,
-              confluenceAppSecret: config.bedrockKb.confluence.confluenceAppSecret,
-              confluenceAccessToken: config.bedrockKb.confluence.confluenceAccessToken,
-              confluenceRefreshToken: config.bedrockKb.confluence.confluenceRefreshToken,
-            }),
-            generateStringKey: "dummy",
-            excludeCharacters: ' "@#$%^&*()_-+={}[]|;:,<>.?/',
-          },
-        },
+        props.confluenceSecretArn,
       );
 
       // Grant read access to the knowledge base role
       confluenceSecret.grantRead(knowledgeBaseRole);
 
-      const _confluenceDataSource = new aws_bedrock.CfnDataSource(
-        this,
-        "ConfluenceDataSource",
-        {
-          name: `${tag}-confluence-data-source`,
-          knowledgeBaseId: knowledgeBase.ref,
-          dataSourceConfiguration: {
-            type: "CONFLUENCE",
-            confluenceConfiguration: {
-              sourceConfiguration: {
-                authType: "OAUTH2_CLIENT_CREDENTIALS",
-                credentialsSecretArn: confluenceSecret.secretArn,
-                hostType: "SAAS",
-                hostUrl: config.bedrockKb.confluence.hostUrl,
-              },
-              crawlerConfiguration: {
-                filterConfiguration: {
-                  // 特定のスペースやページをフィルタリング
-                  type: "PATTERN",
-                  patternObjectFilter: {
-                    filters: [
-                      {
-                        objectType: "Space",
-                        inclusionFilters: config.bedrockKb.confluence.spaces,
-                      },
-                    ],
-                  },
+      new aws_bedrock.CfnDataSource(this, "ConfluenceDataSource", {
+        name: `${tag}-confluence-data-source`,
+        knowledgeBaseId: knowledgeBase.ref,
+        dataSourceConfiguration: {
+          type: "CONFLUENCE",
+          confluenceConfiguration: {
+            sourceConfiguration: {
+              authType: "OAUTH2_CLIENT_CREDENTIALS",
+              credentialsSecretArn: props.confluenceSecretArn,
+              hostType: "SAAS",
+              hostUrl: config.bedrockKb.confluence.hostUrl,
+            },
+            crawlerConfiguration: {
+              filterConfiguration: {
+                // 特定のスペースやページをフィルタリング
+                type: "PATTERN",
+                patternObjectFilter: {
+                  filters: [
+                    {
+                      objectType: "Space",
+                      inclusionFilters: config.bedrockKb.confluence.spaces,
+                    },
+                  ],
                 },
               },
             },
           },
-          description: "Confluence data source for team documentation",
         },
-      );
-
-      // Output for Confluence secret
-      new CfnOutput(this, "ConfluenceSecretArn", {
-        value: confluenceSecret.secretArn,
-        description: "Confluence credentials secret ARN",
-        exportName: `${tag}-confluence-secret-arn`,
-      });
-
-      new CfnOutput(this, "ConfluenceSecretUpdateCommand", {
-        value: `aws secretsmanager update-secret --secret-id ${confluenceSecret.secretArn} --secret-string '{"username":"your-email@example.com","password":"your-confluence-api-token"}'`,
-        description: "Command to update Confluence credentials",
+        description: "Confluence data source for team documentation",
       });
     }
 
