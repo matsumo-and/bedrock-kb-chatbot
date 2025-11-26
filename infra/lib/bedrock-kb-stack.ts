@@ -11,14 +11,13 @@ import {
   RemovalPolicy,
 } from "aws-cdk-lib";
 import type { Construct } from "constructs";
-import type { EnvironmentConfig } from "./config/environmental_config";
 
 interface BedrockKbStackProps extends cdk.StackProps {
   stage: string;
   /**
-   * 環境設定
+   * 埋め込みモデルのARN
    */
-  config: EnvironmentConfig;
+  embeddingModelArn: string;
   /**
    * VPC (NetworkStackから渡される)
    */
@@ -28,28 +27,33 @@ interface BedrockKbStackProps extends cdk.StackProps {
    */
   auroraSecretArn: string;
   /**
-   * Confluence Secret ARN (SecretsStackから渡される、オプショナル)
+   * Confluence設定（オプショナル）
    */
-  confluenceSecretArn?: string;
+  confluence?: {
+    /**
+     * Confluence Secret ARN
+     */
+    secretArn: string;
+    /**
+     * ConfluenceのホストURL
+     */
+    hostUrl: string;
+    /**
+     * 対象とするスペース
+     */
+    spaces: string[];
+  };
 }
 
 export class AmazonBedrockKbStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: BedrockKbStackProps) {
     super(scope, id, props);
 
-    const config = props.config;
-    const stage = props.stage;
-    const vpc = props.vpc;
-
-    if (!config.bedrockKb) {
-      throw new Error(
-        `Bedrock KB configuration is not defined for environment: ${stage}`,
-      );
-    }
+    const { stage, embeddingModelArn, vpc, auroraSecretArn, confluence } =
+      props;
 
     const tag = `bedrock-kb-${stage}`;
     const bucketName = `${tag}-${this.account}`;
-    const embeddingModelArn = config.bedrockKb.embeddingModelArn;
 
     // Aurora PostgreSQL 用のセキュリティグループ
     const auroraSecurityGroup = new aws_ec2.SecurityGroup(
@@ -73,7 +77,7 @@ export class AmazonBedrockKbStack extends cdk.Stack {
     const dbSecret = aws_secretsmanager.Secret.fromSecretCompleteArn(
       this,
       "AuroraSecret",
-      props.auroraSecretArn,
+      auroraSecretArn,
     );
 
     // Aurora PostgreSQL クラスター
@@ -217,13 +221,13 @@ export class AmazonBedrockKbStack extends cdk.Stack {
       description: "S3 data source for documents and knowledge files",
     });
 
-    // Confluence data source (if secret ARN is provided)
-    if (props.confluenceSecretArn && config.bedrockKb.confluence?.hostUrl) {
+    // Confluence data source (if configuration is provided)
+    if (confluence) {
       // Reference the existing secret from SecretsStack
       const confluenceSecret = aws_secretsmanager.Secret.fromSecretCompleteArn(
         this,
         "ConfluenceSecret",
-        props.confluenceSecretArn,
+        confluence.secretArn,
       );
 
       // Grant read access to the knowledge base role
@@ -237,9 +241,9 @@ export class AmazonBedrockKbStack extends cdk.Stack {
           confluenceConfiguration: {
             sourceConfiguration: {
               authType: "OAUTH2_CLIENT_CREDENTIALS",
-              credentialsSecretArn: props.confluenceSecretArn,
+              credentialsSecretArn: confluence.secretArn,
               hostType: "SAAS",
-              hostUrl: config.bedrockKb.confluence.hostUrl,
+              hostUrl: confluence.hostUrl,
             },
             crawlerConfiguration: {
               filterConfiguration: {
@@ -249,7 +253,7 @@ export class AmazonBedrockKbStack extends cdk.Stack {
                   filters: [
                     {
                       objectType: "Space",
-                      inclusionFilters: config.bedrockKb.confluence.spaces,
+                      inclusionFilters: confluence.spaces,
                     },
                   ],
                 },

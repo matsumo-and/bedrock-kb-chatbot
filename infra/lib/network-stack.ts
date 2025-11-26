@@ -1,11 +1,17 @@
 import * as cdk from "aws-cdk-lib";
 import { aws_ec2 } from "aws-cdk-lib";
 import type { Construct } from "constructs";
-import type { EnvironmentConfig } from "./config/environmental_config";
 
 interface NetworkStackProps extends cdk.StackProps {
   stage: string;
-  config: EnvironmentConfig;
+  /**
+   * VPCのCIDRブロック
+   */
+  vpcCidr: string;
+  /**
+   * 使用する最大アベイラビリティゾーン数
+   */
+  maxAzs: number;
 }
 
 export class NetworkStack extends cdk.Stack {
@@ -14,14 +20,14 @@ export class NetworkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: NetworkStackProps) {
     super(scope, id, props);
 
-    const { stage, config } = props;
+    const { stage, vpcCidr, maxAzs } = props;
     const tag = `bedrock-kb-${stage}`;
 
     // VPC の作成
     this.vpc = new aws_ec2.Vpc(this, "BedrockKbVpc", {
       vpcName: `${tag}-vpc`,
-      ipAddresses: aws_ec2.IpAddresses.cidr(config.vpc.cidr),
-      maxAzs: config.vpc.maxAzs,
+      ipAddresses: aws_ec2.IpAddresses.cidr(vpcCidr),
+      maxAzs: maxAzs,
       subnetConfiguration: [
         {
           cidrMask: 24,

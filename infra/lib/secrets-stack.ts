@@ -4,10 +4,25 @@ import type { Construct } from "constructs";
 
 interface SecretsStackProps extends cdk.StackProps {
   stage: string;
-  confluence: {
+  /**
+   * Confluence認証情報
+   */
+  confluence?: {
+    /**
+     * ConfluenceのClient ID (App Key)
+     */
     confluenceAppKey?: string;
+    /**
+     * ConfluenceのClient Secret (App Secret)
+     */
     confluenceAppSecret?: string;
+    /**
+     * ConfluenceのAccess Token
+     */
     confluenceAccessToken?: string;
+    /**
+     * ConfluenceのRefresh Token
+     */
     confluenceRefreshToken?: string;
   };
 }
@@ -43,36 +58,39 @@ export class SecretsStack extends cdk.Stack {
       exportName: `${tag}-aurora-secret-arn`,
     });
 
-    const confluenceSecret = new aws_secretsmanager.Secret(
-      this,
-      "ConfluenceSecret",
-      {
-        secretName: `${tag}-confluence-credentials`,
-        description: "Confluence credentials for Bedrock Knowledge Base",
-        generateSecretString: {
-          secretStringTemplate: JSON.stringify({
-            confluenceAppKey: confluence.confluenceAppKey,
-            confluenceAppSecret: confluence.confluenceAppSecret,
-            confluenceAccessToken: confluence.confluenceAccessToken,
-            confluenceRefreshToken: confluence.confluenceRefreshToken,
-          }),
-          excludeCharacters: ' "@#$%^&*()_-+={}[]|;:,<>.?/',
+    // Confluence Secret (オプショナル)
+    if (confluence) {
+      const confluenceSecret = new aws_secretsmanager.Secret(
+        this,
+        "ConfluenceSecret",
+        {
+          secretName: `${tag}-confluence-credentials`,
+          description: "Confluence credentials for Bedrock Knowledge Base",
+          generateSecretString: {
+            secretStringTemplate: JSON.stringify({
+              confluenceAppKey: confluence.confluenceAppKey ?? "",
+              confluenceAppSecret: confluence.confluenceAppSecret ?? "",
+              confluenceAccessToken: confluence.confluenceAccessToken ?? "",
+              confluenceRefreshToken: confluence.confluenceRefreshToken ?? "",
+            }),
+            excludeCharacters: ' "@#$%^&*()_-+={}[]|;:,<>.?/',
+          },
         },
-      },
-    );
+      );
 
-    this.confluenceSecretArn = confluenceSecret.secretArn;
+      this.confluenceSecretArn = confluenceSecret.secretArn;
 
-    // Output for Confluence secret
-    new CfnOutput(this, "ConfluenceSecretArn", {
-      value: confluenceSecret.secretArn,
-      description: "Confluence credentials secret ARN",
-      exportName: `${tag}-confluence-secret-arn`,
-    });
+      // Output for Confluence secret
+      new CfnOutput(this, "ConfluenceSecretArn", {
+        value: confluenceSecret.secretArn,
+        description: "Confluence credentials secret ARN",
+        exportName: `${tag}-confluence-secret-arn`,
+      });
 
-    new CfnOutput(this, "ConfluenceSecretUpdateCommand", {
-      value: `aws secretsmanager update-secret --secret-id ${confluenceSecret.secretArn} --secret-string '{"confluenceAppKey":"your-app-key","confluenceAppSecret":"your-app-secret","confluenceAccessToken":"your-access-token","confluenceRefreshToken":"your-refresh-token"}'`,
-      description: "Command to update Confluence credentials",
-    });
+      new CfnOutput(this, "ConfluenceSecretUpdateCommand", {
+        value: `aws secretsmanager update-secret --secret-id ${confluenceSecret.secretArn} --secret-string '{"confluenceAppKey":"your-app-key","confluenceAppSecret":"your-app-secret","confluenceAccessToken":"your-access-token","confluenceRefreshToken":"your-refresh-token"}'`,
+        description: "Command to update Confluence credentials",
+      });
+    }
   }
 }

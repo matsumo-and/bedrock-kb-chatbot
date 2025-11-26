@@ -22,23 +22,47 @@ const env = {
 // Network スタック（VPCとSubnetを管理）
 const networkStack = new NetworkStack(app, `NetworkStack${stagePrefix}`, {
   stage,
-  config,
+  vpcCidr: config.vpc.cidr,
+  maxAzs: config.vpc.maxAzs,
   env,
 });
 
 // Secrets スタック（認証情報を管理）
 const secretsStack = new SecretsStack(app, `SecretsStack${stagePrefix}`, {
   stage,
-  confluence: { ...config.bedrockKb?.confluence },
+  confluence: config.bedrockKb?.confluence
+    ? {
+        confluenceAppKey: config.bedrockKb.confluence.confluenceAppKey,
+        confluenceAppSecret: config.bedrockKb.confluence.confluenceAppSecret,
+        confluenceAccessToken:
+          config.bedrockKb.confluence.confluenceAccessToken,
+        confluenceRefreshToken:
+          config.bedrockKb.confluence.confluenceRefreshToken,
+      }
+    : undefined,
   env,
 });
 
 // Bedrock Knowledge Base スタック
+const bedrockKbConfig = config.bedrockKb;
+if (!bedrockKbConfig) {
+  throw new Error(
+    `Bedrock KB configuration is not defined for environment: ${stage}`,
+  );
+}
+
 new AmazonBedrockKbStack(app, `BedrockKbStack${stagePrefix}`, {
   stage,
-  config,
+  embeddingModelArn: bedrockKbConfig.embeddingModelArn,
   vpc: networkStack.vpc,
   auroraSecretArn: secretsStack.auroraSecretArn,
-  confluenceSecretArn: secretsStack.confluenceSecretArn,
+  confluence:
+    bedrockKbConfig.confluence && secretsStack.confluenceSecretArn
+      ? {
+          secretArn: secretsStack.confluenceSecretArn,
+          hostUrl: bedrockKbConfig.confluence.hostUrl,
+          spaces: bedrockKbConfig.confluence.spaces,
+        }
+      : undefined,
   env,
 });

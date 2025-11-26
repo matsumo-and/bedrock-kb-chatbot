@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm test -- config-isolation.test.ts)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
