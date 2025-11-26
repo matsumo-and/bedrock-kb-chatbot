@@ -12,12 +12,10 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: ./web
+        working-directory: web
     env:
-      AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
-      POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
-      BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
-      REDIS_URL: ${{ secrets.REDIS_URL }}
+      AUTH_SECRET: dummy
+      POSTGRES_URL: dummy
 
     steps:
       - uses: actions/checkout@v4
