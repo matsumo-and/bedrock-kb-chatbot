@@ -3,6 +3,7 @@ import * as cdk from "aws-cdk-lib";
 import * as dotenv from "dotenv";
 import { getConfig } from "../lib/config/environmental_config";
 import { AmazonBedrockKbStack } from "../lib/stack/bedrock-kb-stack";
+import { BastionStack } from "../lib/stack/bastion-stack";
 import { NetworkStack } from "../lib/stack/network-stack";
 import { SecretsStack } from "../lib/stack/secrets-stack";
 
@@ -54,18 +55,32 @@ if (!bedrockKbConfig) {
   );
 }
 
-new AmazonBedrockKbStack(app, `BedrockKbStack${stagePrefix}`, {
+const bedrockKbStack = new AmazonBedrockKbStack(
+  app,
+  `BedrockKbStack${stagePrefix}`,
+  {
+    stage,
+    embeddingModelArn: bedrockKbConfig.embeddingModelArn,
+    vpc: networkStack.vpc,
+    auroraSecretArn: secretsStack.auroraSecretArn,
+    confluence:
+      bedrockKbConfig.confluence && secretsStack.confluenceSecretArn
+        ? {
+            secretArn: secretsStack.confluenceSecretArn,
+            hostUrl: bedrockKbConfig.confluence.hostUrl,
+            spaces: bedrockKbConfig.confluence.spaces,
+          }
+        : undefined,
+    env,
+  },
+);
+
+// Bastion Host スタック
+new BastionStack(app, `BastionStack${stagePrefix}`, {
   stage,
-  embeddingModelArn: bedrockKbConfig.embeddingModelArn,
   vpc: networkStack.vpc,
+  auroraCluster: bedrockKbStack.auroraCluster,
+  auroraSecurityGroup: bedrockKbStack.auroraSecurityGroup,
   auroraSecretArn: secretsStack.auroraSecretArn,
-  confluence:
-    bedrockKbConfig.confluence && secretsStack.confluenceSecretArn
-      ? {
-          secretArn: secretsStack.confluenceSecretArn,
-          hostUrl: bedrockKbConfig.confluence.hostUrl,
-          spaces: bedrockKbConfig.confluence.spaces,
-        }
-      : undefined,
   env,
 });

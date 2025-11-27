@@ -46,6 +46,9 @@ interface BedrockKbStackProps extends cdk.StackProps {
 }
 
 export class AmazonBedrockKbStack extends cdk.Stack {
+  public readonly auroraCluster: aws_rds.DatabaseCluster;
+  public readonly auroraSecurityGroup: aws_ec2.SecurityGroup;
+
   constructor(scope: Construct, id: string, props: BedrockKbStackProps) {
     super(scope, id, props);
 
@@ -56,7 +59,7 @@ export class AmazonBedrockKbStack extends cdk.Stack {
     const bucketName = `${tag}-${this.account}`;
 
     // Aurora PostgreSQL 用のセキュリティグループ
-    const auroraSecurityGroup = new aws_ec2.SecurityGroup(
+    this.auroraSecurityGroup = new aws_ec2.SecurityGroup(
       this,
       "AuroraSecurityGroup",
       {
@@ -67,7 +70,7 @@ export class AmazonBedrockKbStack extends cdk.Stack {
     );
 
     // VPC内からのPostgreSQL接続を許可
-    auroraSecurityGroup.addIngressRule(
+    this.auroraSecurityGroup.addIngressRule(
       aws_ec2.Peer.ipv4(vpc.vpcCidrBlock),
       aws_ec2.Port.tcp(5432),
       "Allow PostgreSQL connections from VPC",
@@ -81,7 +84,7 @@ export class AmazonBedrockKbStack extends cdk.Stack {
     );
 
     // Aurora PostgreSQL クラスター
-    const auroraCluster = new aws_rds.DatabaseCluster(this, "AuroraCluster", {
+    this.auroraCluster = new aws_rds.DatabaseCluster(this, "AuroraCluster", {
       engine: aws_rds.DatabaseClusterEngine.auroraPostgres({
         version: aws_rds.AuroraPostgresEngineVersion.VER_16_9,
       }),
@@ -97,7 +100,7 @@ export class AmazonBedrockKbStack extends cdk.Stack {
       vpcSubnets: {
         subnetType: aws_ec2.SubnetType.PRIVATE_ISOLATED,
       },
-      securityGroups: [auroraSecurityGroup],
+      securityGroups: [this.auroraSecurityGroup],
       removalPolicy: RemovalPolicy.DESTROY,
       deletionProtection: false,
       enableDataApi: true,
@@ -176,7 +179,7 @@ export class AmazonBedrockKbStack extends cdk.Stack {
             }),
             // RDS Data APIへのアクセス権限
             new aws_iam.PolicyStatement({
-              resources: [auroraCluster.clusterArn],
+              resources: [this.auroraCluster.clusterArn],
               actions: [
                 "rds-data:ExecuteStatement",
                 "rds-data:BatchExecuteStatement",
@@ -208,7 +211,7 @@ export class AmazonBedrockKbStack extends cdk.Stack {
           rdsConfiguration: {
             credentialsSecretArn: dbSecret.secretArn,
             databaseName: "postgres",
-            resourceArn: auroraCluster.clusterArn,
+            resourceArn: this.auroraCluster.clusterArn,
             tableName: "bedrock_knowledge_base",
             fieldMapping: {
               vectorField: "embedding",
@@ -223,7 +226,7 @@ export class AmazonBedrockKbStack extends cdk.Stack {
     );
 
     // Wait for Aurora to be ready
-    knowledgeBase.node.addDependency(auroraCluster);
+    knowledgeBase.node.addDependency(this.auroraCluster);
 
     // S3 data source
     const s3DataSource = new aws_bedrock.CfnDataSource(this, "S3DataSource", {
@@ -321,7 +324,7 @@ export class AmazonBedrockKbStack extends cdk.Stack {
     });
 
     new CfnOutput(this, "AuroraClusterEndpoint", {
-      value: auroraCluster.clusterEndpoint.hostname,
+      value: this.auroraCluster.clusterEndpoint.hostname,
       description: "Aurora cluster endpoint",
       exportName: `${tag}-aurora-endpoint`,
     });
