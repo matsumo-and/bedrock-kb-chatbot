@@ -60,9 +60,7 @@ const bedrockKbStack = new AmazonBedrockKbStack(
   `BedrockKbStack${stagePrefix}`,
   {
     stage,
-    embeddingModelArn: bedrockKbConfig.embeddingModelArn,
     vpc: networkStack.vpc,
-    auroraSecretArn: secretsStack.auroraSecretArn,
     confluence:
       bedrockKbConfig.confluence && secretsStack.confluenceSecretArn
         ? {
@@ -79,7 +77,7 @@ const bedrockKbStack = new AmazonBedrockKbStack(
 new BastionStack(app, `BastionStack${stagePrefix}`, {
   stage,
   vpc: networkStack.vpc,
-  auroraCluster: bedrockKbStack.auroraCluster,
-  auroraSecretArn: secretsStack.auroraSecretArn,
+  clusterIdentifier: bedrockKbStack.auroraClusterId,
+  auroraSecretArn: bedrockKbStack.vectorStore.credentialsSecretArn,
   env,
 });

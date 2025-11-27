@@ -28,7 +28,6 @@ interface SecretsStackProps extends cdk.StackProps {
 }
 
 export class SecretsStack extends cdk.Stack {
-  public readonly auroraSecretArn: string;
   public readonly confluenceSecretArn?: string;
 
   constructor(scope: Construct, id: string, props: SecretsStackProps) {
@@ -36,27 +35,6 @@ export class SecretsStack extends cdk.Stack {
 
     const { stage, confluence } = props;
     const tag = `bedrock-kb-${stage}`;
-
-    // Aurora PostgreSQL のパスワード用シークレット
-    const auroraSecret = new aws_secretsmanager.Secret(this, "AuroraSecret", {
-      secretName: `${tag}-aurora-secret`,
-      description: "Aurora PostgreSQL credentials for Bedrock Knowledge Base",
-      generateSecretString: {
-        secretStringTemplate: JSON.stringify({ username: "postgres" }),
-        generateStringKey: "password",
-        excludeCharacters: ' "@#$%^&*()_-+={}[]|;:,<>.?/',
-        passwordLength: 32,
-      },
-    });
-
-    this.auroraSecretArn = auroraSecret.secretArn;
-
-    // Output for Aurora secret
-    new CfnOutput(this, "AuroraSecretArn", {
-      value: auroraSecret.secretArn,
-      description: "Aurora PostgreSQL credentials secret ARN",
-      exportName: `${tag}-aurora-secret-arn`,
-    });
 
     // Confluence Secret (オプショナル)
     if (confluence) {

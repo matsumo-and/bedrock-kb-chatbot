@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@cdklabs/generative-ai-cdk-constructs':
+        specifier: ^0.1.312
+        version: 0.1.312(aws-cdk-lib@2.225.0(constructs@10.4.3))(constructs@10.4.3)
       aws-cdk-lib:
         specifier: 2.225.0
         version: 2.225.0(constructs@10.4.3)
@@ -281,6 +284,16 @@ packages:
     engines: {node: '>=14.21.3'}
     cpu: [x64]
     os: [win32]
+
+  '@cdklabs/generative-ai-cdk-constructs@0.1.312':
+    resolution: {integrity: sha512-ctHy0JgRdQE1jsC4SHsTWyr2feSR4NRxmL/ZViJDPw65FcvTPs1rNcgyB8uOZmr7kadeMvHA0yQ51pmlxc/XLA==}
+    engines: {node: '>= 20.x <= 24.x'}
+    peerDependencies:
+      aws-cdk-lib: ^2.221.1
+      constructs: ^10.3.0
+    bundledDependencies:
+      - '@aws-cdk/aws-lambda-python-alpha'
+      - deepmerge
 
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -718,6 +731,12 @@ packages:
 
   caniuse-lite@1.0.30001755:
     resolution: {integrity: sha512-44V+Jm6ctPj7R52Na4TLi3Zri4dWUljJd+RDm+j8LtNCc/ihLCT+X1TzoOAkRETEWqjuLnh9581Tl80FvK7jVA==}
+
+  cdk-nag@2.37.55:
+    resolution: {integrity: sha512-xcAkygwbph3pp7N0UEzJBmXUH/MIsluV7DYJSeZ/V3yCr0Y0QaRGO298WyD6mi4K+Rmnpl+EJoWUxcOblOqLKA==}
+    peerDependencies:
+      aws-cdk-lib: ^2.176.0
+      constructs: ^10.0.5
 
   chalk@4.1.2:
     resolution: {integrity: sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA==}
@@ -1859,6 +1878,12 @@ snapshots:
   '@biomejs/cli-win32-x64@2.3.6':
     optional: true
 
+  '@cdklabs/generative-ai-cdk-constructs@0.1.312(aws-cdk-lib@2.225.0(constructs@10.4.3))(constructs@10.4.3)':
+    dependencies:
+      aws-cdk-lib: 2.225.0(constructs@10.4.3)
+      cdk-nag: 2.37.55(aws-cdk-lib@2.225.0(constructs@10.4.3))(constructs@10.4.3)
+      constructs: 10.4.3
+
   '@cspotcode/source-map-support@0.8.1':
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
@@ -2387,6 +2412,11 @@ snapshots:
   camelcase@6.3.0: {}
 
   caniuse-lite@1.0.30001755: {}
+
+  cdk-nag@2.37.55(aws-cdk-lib@2.225.0(constructs@10.4.3))(constructs@10.4.3):
+    dependencies:
+      aws-cdk-lib: 2.225.0(constructs@10.4.3)
+      constructs: 10.4.3
 
   chalk@4.1.2:
     dependencies:

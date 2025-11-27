@@ -2,7 +2,7 @@ import * as cdk from "aws-cdk-lib";
 import {
   aws_ec2,
   aws_iam,
-  type aws_rds,
+  aws_rds,
   aws_secretsmanager,
   CfnOutput,
 } from "aws-cdk-lib";
@@ -15,9 +15,9 @@ interface BastionStackProps extends cdk.StackProps {
    */
   vpc: aws_ec2.IVpc;
   /**
-   * Aurora クラスター
+   * Aurora クラスター識別子
    */
-  auroraCluster: aws_rds.DatabaseCluster;
+  clusterIdentifier: string;
   /**
    * Aurora Secret ARN
    */
@@ -30,9 +30,20 @@ export class BastionStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: BastionStackProps) {
     super(scope, id, props);
 
-    const { stage, vpc, auroraCluster, auroraSecretArn } = props;
+    const { stage, vpc, clusterIdentifier, auroraSecretArn } = props;
 
     const tag = `bedrock-kb-${stage}`;
+
+    // Aurora cluster を参照して endpoint を取得
+    const auroraCluster = aws_rds.DatabaseCluster.fromDatabaseClusterAttributes(
+      this,
+      "ImportedAuroraCluster",
+      {
+        clusterIdentifier: clusterIdentifier,
+      },
+    );
+
+    const auroraEndpoint = auroraCluster.clusterEndpoint.hostname;
 
     // Bastion Host用のセキュリティグループ
     const bastionSecurityGroup = new aws_ec2.SecurityGroup(
@@ -110,7 +121,7 @@ export class BastionStack extends cdk.Stack {
       "# Aurora PostgreSQL への接続スクリプト",
       "",
       `SECRET_ARN="${auroraSecretArn}"`,
-      `CLUSTER_ENDPOINT="${auroraCluster.clusterEndpoint.hostname}"`,
+      `CLUSTER_ENDPOINT="${auroraEndpoint}"`,
       "",
       "# Secrets Manager からクレデンシャルを取得",
       'echo "Fetching credentials from Secrets Manager..."',
@@ -142,7 +153,7 @@ export class BastionStack extends cdk.Stack {
       "   sudo /usr/local/bin/connect-aurora.sh",
       "",
       "2. 手動で接続する場合:",
-      `   - Endpoint: ${auroraCluster.clusterEndpoint.hostname}`,
+      `   - Endpoint: ${auroraEndpoint}`,
       "   - Port: 5432",
       "   - Database: postgres",
       "",
@@ -199,7 +210,7 @@ export class BastionStack extends cdk.Stack {
     });
 
     new CfnOutput(this, "AuroraEndpoint", {
-      value: auroraCluster.clusterEndpoint.hostname,
+      value: auroraEndpoint,
       description: "Aurora cluster endpoint",
     });
   }

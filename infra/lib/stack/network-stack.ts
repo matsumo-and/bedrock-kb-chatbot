@@ -72,6 +72,24 @@ export class NetworkStack extends cdk.Stack {
       },
     });
 
+    // VPC Endpoint for Bedrock
+    new aws_ec2.InterfaceVpcEndpoint(this, "BedrockEndpoint", {
+      vpc: this.vpc,
+      service: aws_ec2.InterfaceVpcEndpointAwsService.BEDROCK,
+      subnets: {
+        subnetType: aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
+      },
+    });
+
+    // VPC Endpoint for Bedrock Runtime
+    new aws_ec2.InterfaceVpcEndpoint(this, "BedrockRuntimeEndpoint", {
+      vpc: this.vpc,
+      service: aws_ec2.InterfaceVpcEndpointAwsService.BEDROCK_RUNTIME,
+      subnets: {
+        subnetType: aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
+      },
+    });
+
     // Outputs
     new cdk.CfnOutput(this, "VpcId", {
       value: this.vpc.vpcId,
