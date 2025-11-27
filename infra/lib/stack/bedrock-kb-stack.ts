@@ -93,14 +93,6 @@ export class AmazonBedrockKbStack extends cdk.Stack {
           aws_ec2.InstanceSize.MEDIUM,
         ),
       }),
-      readers: [
-        aws_rds.ClusterInstance.provisioned("reader", {
-          instanceType: aws_ec2.InstanceType.of(
-            aws_ec2.InstanceClass.T3,
-            aws_ec2.InstanceSize.MEDIUM,
-          ),
-        }),
-      ],
       vpc,
       vpcSubnets: {
         subnetType: aws_ec2.SubnetType.PRIVATE_ISOLATED,
@@ -142,6 +134,32 @@ export class AmazonBedrockKbStack extends cdk.Stack {
             new aws_iam.PolicyStatement({
               resources: [dbSecret.secretArn],
               actions: ["secretsmanager:GetSecretValue"],
+            }),
+            // Confluence用のシークレットへのアクセス権限
+            ...(confluence
+              ? [
+                  new aws_iam.PolicyStatement({
+                    resources: [confluence.secretArn],
+                    actions: [
+                      "secretsmanager:GetSecretValue",
+                      "secretsmanager:DescribeSecret",
+                      "secretsmanager:PutSecretValue",
+                      "secretsmanager:UpdateSecret",
+                    ],
+                  }),
+                ]
+              : []),
+            // KMSへのアクセス権限（Secretsの暗号化キーへのアクセス）
+            new aws_iam.PolicyStatement({
+              resources: ["*"],
+              actions: ["kms:Decrypt", "kms:DescribeKey"],
+              conditions: {
+                StringEquals: {
+                  "kms:ViaService": [
+                    `secretsmanager.${this.region}.amazonaws.com`,
+                  ],
+                },
+              },
             }),
             // 埋め込みモデルへのアクセス権限
             new aws_iam.PolicyStatement({
