@@ -1,11 +1,5 @@
 import * as cdk from "aws-cdk-lib";
-import {
-  aws_ec2,
-  aws_iam,
-  aws_rds,
-  aws_secretsmanager,
-  CfnOutput,
-} from "aws-cdk-lib";
+import { aws_ec2, aws_iam, aws_rds, CfnOutput } from "aws-cdk-lib";
 import type { Construct } from "constructs";
 
 interface BastionStackProps extends cdk.StackProps {

@@ -2,8 +2,8 @@
 import * as cdk from "aws-cdk-lib";
 import * as dotenv from "dotenv";
 import { getConfig } from "../lib/config/environmental_config";
-import { AmazonBedrockKbStack } from "../lib/stack/bedrock-kb-stack";
 import { BastionStack } from "../lib/stack/bastion-stack";
+import { AmazonBedrockKbStack } from "../lib/stack/bedrock-kb-stack";
 import { NetworkStack } from "../lib/stack/network-stack";
 import { SecretsStack } from "../lib/stack/secrets-stack";
 
