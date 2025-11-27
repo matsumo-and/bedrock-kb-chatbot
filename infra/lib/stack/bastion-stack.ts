@@ -2,7 +2,7 @@ import * as cdk from "aws-cdk-lib";
 import {
   aws_ec2,
   aws_iam,
-  aws_rds,
+  type aws_rds,
   aws_secretsmanager,
   CfnOutput,
 } from "aws-cdk-lib";
@@ -19,10 +19,6 @@ interface BastionStackProps extends cdk.StackProps {
    */
   auroraCluster: aws_rds.DatabaseCluster;
   /**
-   * Aurora のセキュリティグループ
-   */
-  auroraSecurityGroup: aws_ec2.ISecurityGroup;
-  /**
    * Aurora Secret ARN
    */
   auroraSecretArn: string;
@@ -34,8 +30,7 @@ export class BastionStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: BastionStackProps) {
     super(scope, id, props);
 
-    const { stage, vpc, auroraCluster, auroraSecurityGroup, auroraSecretArn } =
-      props;
+    const { stage, vpc, auroraCluster, auroraSecretArn } = props;
 
     const tag = `bedrock-kb-${stage}`;
 
@@ -50,12 +45,8 @@ export class BastionStack extends cdk.Stack {
       },
     );
 
-    // Aurora のセキュリティグループに Bastion からのアクセスを許可
-    auroraSecurityGroup.addIngressRule(
-      bastionSecurityGroup,
-      aws_ec2.Port.tcp(5432),
-      "Allow PostgreSQL connections from Bastion Host",
-    );
+    // Note: Aurora はすでに VPC CIDR からの接続を許可しているため、
+    // Bastion からの接続も自動的に許可される (BedrockKbStack で設定済み)
 
     // IAM Role for Bastion Host (SSM Session Manager用)
     const bastionRole = new aws_iam.Role(this, "BastionRole", {
@@ -72,7 +63,7 @@ export class BastionStack extends cdk.Stack {
           statements: [
             // Aurora Secret への読み取りアクセス
             new aws_iam.PolicyStatement({
-              resources: [auroraSecretArn],
+              resources: ["*"],
               actions: ["secretsmanager:GetSecretValue"],
             }),
             // KMS復号化権限
@@ -91,13 +82,6 @@ export class BastionStack extends cdk.Stack {
         }),
       },
     });
-
-    // Aurora Secret の参照
-    const dbSecret = aws_secretsmanager.Secret.fromSecretCompleteArn(
-      this,
-      "AuroraSecret",
-      auroraSecretArn,
-    );
 
     // User Data - PostgreSQL クライアントのインストール
     const userData = aws_ec2.UserData.forLinux();
@@ -173,32 +157,8 @@ export class BastionStack extends cdk.Stack {
       "chown ec2-user:ec2-user /home/ec2-user/README.txt",
     );
 
-    // VPC Endpoints for SSM (プライベートサブネットからSSM接続するために必要)
-    new aws_ec2.InterfaceVpcEndpoint(this, "SSMEndpoint", {
-      vpc,
-      service: aws_ec2.InterfaceVpcEndpointAwsService.SSM,
-      subnets: {
-        subnetType: aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-      },
-    });
-
-    new aws_ec2.InterfaceVpcEndpoint(this, "SSMMessagesEndpoint", {
-      vpc,
-      service: aws_ec2.InterfaceVpcEndpointAwsService.SSM_MESSAGES,
-      subnets: {
-        subnetType: aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-      },
-    });
-
-    new aws_ec2.InterfaceVpcEndpoint(this, "EC2MessagesEndpoint", {
-      vpc,
-      service: aws_ec2.InterfaceVpcEndpointAwsService.EC2_MESSAGES,
-      subnets: {
-        subnetType: aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-      },
-    });
-
     // Bastion Host (Amazon Linux 2023) - プライベートサブネットに配置
+    // Note: VPC Endpoints for SSM are created in NetworkStack
     this.bastionInstance = new aws_ec2.Instance(this, "BastionInstance", {
       instanceName: `${tag}-bastion`,
       instanceType: aws_ec2.InstanceType.of(

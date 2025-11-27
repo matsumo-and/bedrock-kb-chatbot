@@ -80,7 +80,6 @@ new BastionStack(app, `BastionStack${stagePrefix}`, {
   stage,
   vpc: networkStack.vpc,
   auroraCluster: bedrockKbStack.auroraCluster,
-  auroraSecurityGroup: bedrockKbStack.auroraSecurityGroup,
   auroraSecretArn: secretsStack.auroraSecretArn,
   env,
 });

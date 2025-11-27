@@ -47,6 +47,31 @@ export class NetworkStack extends cdk.Stack {
       ],
     });
 
+    // VPC Endpoints for SSM Session Manager (Bastion Host用)
+    new aws_ec2.InterfaceVpcEndpoint(this, "SSMEndpoint", {
+      vpc: this.vpc,
+      service: aws_ec2.InterfaceVpcEndpointAwsService.SSM,
+      subnets: {
+        subnetType: aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
+      },
+    });
+
+    new aws_ec2.InterfaceVpcEndpoint(this, "SSMMessagesEndpoint", {
+      vpc: this.vpc,
+      service: aws_ec2.InterfaceVpcEndpointAwsService.SSM_MESSAGES,
+      subnets: {
+        subnetType: aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
+      },
+    });
+
+    new aws_ec2.InterfaceVpcEndpoint(this, "EC2MessagesEndpoint", {
+      vpc: this.vpc,
+      service: aws_ec2.InterfaceVpcEndpointAwsService.EC2_MESSAGES,
+      subnets: {
+        subnetType: aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
+      },
+    });
+
     // Outputs
     new cdk.CfnOutput(this, "VpcId", {
       value: this.vpc.vpcId,
