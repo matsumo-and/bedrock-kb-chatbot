@@ -173,7 +173,32 @@ export class BastionStack extends cdk.Stack {
       "chown ec2-user:ec2-user /home/ec2-user/README.txt",
     );
 
-    // Bastion Host (Amazon Linux 2023)
+    // VPC Endpoints for SSM (プライベートサブネットからSSM接続するために必要)
+    new aws_ec2.InterfaceVpcEndpoint(this, "SSMEndpoint", {
+      vpc,
+      service: aws_ec2.InterfaceVpcEndpointAwsService.SSM,
+      subnets: {
+        subnetType: aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
+      },
+    });
+
+    new aws_ec2.InterfaceVpcEndpoint(this, "SSMMessagesEndpoint", {
+      vpc,
+      service: aws_ec2.InterfaceVpcEndpointAwsService.SSM_MESSAGES,
+      subnets: {
+        subnetType: aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
+      },
+    });
+
+    new aws_ec2.InterfaceVpcEndpoint(this, "EC2MessagesEndpoint", {
+      vpc,
+      service: aws_ec2.InterfaceVpcEndpointAwsService.EC2_MESSAGES,
+      subnets: {
+        subnetType: aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
+      },
+    });
+
+    // Bastion Host (Amazon Linux 2023) - プライベートサブネットに配置
     this.bastionInstance = new aws_ec2.Instance(this, "BastionInstance", {
       instanceName: `${tag}-bastion`,
       instanceType: aws_ec2.InstanceType.of(
@@ -185,14 +210,13 @@ export class BastionStack extends cdk.Stack {
       }),
       vpc,
       vpcSubnets: {
-        subnetType: aws_ec2.SubnetType.PUBLIC, // パブリックサブネットに配置
+        subnetType: aws_ec2.SubnetType.PRIVATE_WITH_EGRESS, // プライベートサブネットに配置
       },
       securityGroup: bastionSecurityGroup,
       role: bastionRole,
       userData: userData,
-      // SSM Session Manager を使用するため、パブリック IP は不要
-      // ただし、インターネットへのアウトバウンドアクセスのため設定
-      associatePublicIpAddress: true,
+      // プライベートサブネット + VPC Endpoint でSSM接続するため、パブリックIPは不要
+      associatePublicIpAddress: false,
       ssmSessionPermissions: true,
     });
 
