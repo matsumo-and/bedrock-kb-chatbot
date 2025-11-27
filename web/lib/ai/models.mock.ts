@@ -17,11 +17,7 @@ const createMockModel = (isReasoningEnabled = false): LanguageModel => {
       content: [{ type: "text", text: "Hello, world!" }],
       warnings: [],
     }),
-    doStream: async ({
-      prompt,
-    }: {
-      prompt: ModelMessage[];
-    }) => {
+    doStream: async ({ prompt }: { prompt: ModelMessage[] }) => {
       const chunks = getResponseChunksByPrompt(prompt, isReasoningEnabled);
 
       return {
