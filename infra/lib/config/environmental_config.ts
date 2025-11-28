@@ -95,7 +95,10 @@ const environmentConfigs: { [key: string]: EnvironmentConfig } = {
         confluenceAccessToken: process.env.CONFLUENCE_ACCESS_TOKEN ?? "",
         confluenceRefreshToken: process.env.CONFLUENCE_REFRESH_TOKEN ?? "",
         hostUrl: process.env.CONFLUENCE_HOST_URL ?? "",
-        spaces: process.env.CONFLUENCE_SPACES?.split(",") || [],
+        spaces:
+          process.env.CONFLUENCE_SPACES?.split(",").filter(
+            (s) => s.trim() !== "",
+          ) || [],
       },
     },
   },

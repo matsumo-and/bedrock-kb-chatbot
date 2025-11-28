@@ -1,21 +1,19 @@
 import { amazonaurora, bedrock } from "@cdklabs/generative-ai-cdk-constructs";
 import * as cdk from "aws-cdk-lib";
 import {
-  type aws_ec2,
+  aws_ec2,
   aws_s3,
   aws_secretsmanager,
+  aws_ssm,
   CfnOutput,
   Duration,
   RemovalPolicy,
 } from "aws-cdk-lib";
+import { AuroraPostgresEngineVersion } from "aws-cdk-lib/aws-rds";
 import type { Construct } from "constructs";
 
 interface BedrockKbStackProps extends cdk.StackProps {
   stage: string;
-  /**
-   * VPC (NetworkStackから渡される)
-   */
-  vpc: aws_ec2.IVpc;
   /**
    * Confluence設定（オプショナル）
    */
@@ -42,10 +40,21 @@ export class AmazonBedrockKbStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: BedrockKbStackProps) {
     super(scope, id, props);
 
-    const { stage, vpc, confluence } = props;
+    const { stage, confluence } = props;
 
     const tag = `bedrock-kb-${stage}`;
     const bucketName = `${tag}-${this.account}`;
+
+    // SSM から VPC ID を取得
+    const vpcId = aws_ssm.StringParameter.valueFromLookup(
+      this,
+      `/${tag}/vpc-id`,
+    );
+
+    // VPC ID から IVpc を取得
+    const vpc = aws_ec2.Vpc.fromLookup(this, "Vpc", {
+      vpcId: vpcId,
+    });
 
     // S3 bucket for the data source
     const dataSourceBucket = new aws_s3.Bucket(this, "DataSourceBucket", {
@@ -69,6 +78,7 @@ export class AmazonBedrockKbStack extends cdk.Stack {
       this,
       "VectorStore",
       {
+        postgreSQLVersion: AuroraPostgresEngineVersion.VER_16_9,
         embeddingsModelVectorDimension: 1024, // Titan Embed Text v2の次元数
         vpc: vpc,
         clusterId: this.auroraClusterId,
@@ -112,12 +122,15 @@ export class AmazonBedrockKbStack extends cdk.Stack {
           "ConfluenceSecret",
           confluence.secretArn,
         ),
-        filters: [
-          {
-            objectType: bedrock.ConfluenceObjectType.SPACE,
-            includePatterns: confluence.spaces,
-          },
-        ],
+        filters:
+          confluence.spaces.length > 0
+            ? [
+                {
+                  objectType: bedrock.ConfluenceObjectType.SPACE,
+                  includePatterns: confluence.spaces,
+                },
+              ]
+            : undefined,
       });
     }
 

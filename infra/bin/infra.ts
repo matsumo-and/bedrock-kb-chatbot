@@ -24,7 +24,8 @@ const env = {
 };
 
 // Network スタック（VPCとSubnetを管理）
-const networkStack = new NetworkStack(app, `NetworkStack${stagePrefix}`, {
+// VPC ID は SSM Parameter Store に格納され、他のスタックから lookup される
+new NetworkStack(app, `NetworkStack${stagePrefix}`, {
   stage,
   vpcCidr: config.vpc.cidr,
   maxAzs: config.vpc.maxAzs,
@@ -60,7 +61,6 @@ const bedrockKbStack = new AmazonBedrockKbStack(
   `BedrockKbStack${stagePrefix}`,
   {
     stage,
-    vpc: networkStack.vpc,
     confluence:
       bedrockKbConfig.confluence && secretsStack.confluenceSecretArn
         ? {
@@ -76,8 +76,6 @@ const bedrockKbStack = new AmazonBedrockKbStack(
 // Bastion Host スタック
 new BastionStack(app, `BastionStack${stagePrefix}`, {
   stage,
-  vpc: networkStack.vpc,
-  clusterIdentifier: bedrockKbStack.auroraClusterId,
   auroraSecretArn: bedrockKbStack.vectorStore.credentialsSecretArn,
   env,
 });

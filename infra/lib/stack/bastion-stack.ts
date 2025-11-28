@@ -1,17 +1,9 @@
 import * as cdk from "aws-cdk-lib";
-import { aws_ec2, aws_iam, aws_rds, CfnOutput } from "aws-cdk-lib";
+import { aws_ec2, aws_iam, aws_ssm, CfnOutput } from "aws-cdk-lib";
 import type { Construct } from "constructs";
 
 interface BastionStackProps extends cdk.StackProps {
   stage: string;
-  /**
-   * VPC (NetworkStackから渡される)
-   */
-  vpc: aws_ec2.IVpc;
-  /**
-   * Aurora クラスター識別子
-   */
-  clusterIdentifier: string;
   /**
    * Aurora Secret ARN
    */
@@ -24,20 +16,20 @@ export class BastionStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: BastionStackProps) {
     super(scope, id, props);
 
-    const { stage, vpc, clusterIdentifier, auroraSecretArn } = props;
+    const { stage, auroraSecretArn } = props;
 
     const tag = `bedrock-kb-${stage}`;
 
-    // Aurora cluster を参照して endpoint を取得
-    const auroraCluster = aws_rds.DatabaseCluster.fromDatabaseClusterAttributes(
+    // SSM から VPC ID を取得
+    const vpcId = aws_ssm.StringParameter.valueFromLookup(
       this,
-      "ImportedAuroraCluster",
-      {
-        clusterIdentifier: clusterIdentifier,
-      },
+      `/${tag}/vpc-id`,
     );
 
-    const auroraEndpoint = auroraCluster.clusterEndpoint.hostname;
+    // VPC ID から IVpc を取得
+    const vpc = aws_ec2.Vpc.fromLookup(this, "Vpc", {
+      vpcId: vpcId,
+    });
 
     // Bastion Host用のセキュリティグループ
     const bastionSecurityGroup = new aws_ec2.SecurityGroup(
@@ -115,24 +107,26 @@ export class BastionStack extends cdk.Stack {
       "# Aurora PostgreSQL への接続スクリプト",
       "",
       `SECRET_ARN="${auroraSecretArn}"`,
-      `CLUSTER_ENDPOINT="${auroraEndpoint}"`,
       "",
-      "# Secrets Manager からクレデンシャルを取得",
+      "# Secrets Manager からクレデンシャルとホスト情報を取得",
       'echo "Fetching credentials from Secrets Manager..."',
       "SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id $SECRET_ARN --query SecretString --output text)",
       "",
+      "HOST=$(echo $SECRET_JSON | jq -r .host)",
+      "PORT=$(echo $SECRET_JSON | jq -r .port)",
       "USERNAME=$(echo $SECRET_JSON | jq -r .username)",
       "PASSWORD=$(echo $SECRET_JSON | jq -r .password)",
       "DATABASE=$(echo $SECRET_JSON | jq -r .dbname)",
       "",
       'echo "Connecting to Aurora PostgreSQL..."',
-      'echo "Host: $CLUSTER_ENDPOINT"',
+      'echo "Host: $HOST"',
+      'echo "Port: $PORT"',
       'echo "Database: $DATABASE"',
       'echo "Username: $USERNAME"',
       'echo ""',
       "",
       "# 環境変数にパスワードを設定して psql を実行",
-      "PGPASSWORD=$PASSWORD psql -h $CLUSTER_ENDPOINT -U $USERNAME -d $DATABASE",
+      "PGPASSWORD=$PASSWORD psql -h $HOST -p $PORT -U $USERNAME -d $DATABASE",
       "EOF",
       "",
       "chmod +x /usr/local/bin/connect-aurora.sh",
@@ -146,17 +140,27 @@ export class BastionStack extends cdk.Stack {
       "1. Aurora に接続:",
       "   sudo /usr/local/bin/connect-aurora.sh",
       "",
-      "2. 手動で接続する場合:",
-      `   - Endpoint: ${auroraEndpoint}`,
-      "   - Port: 5432",
-      "   - Database: postgres",
-      "",
-      "3. Secrets Manager から認証情報を取得:",
+      "2. Secrets Manager から認証情報を取得:",
       `   aws secretsmanager get-secret-value --secret-id ${auroraSecretArn} --query SecretString --output text | jq`,
+      "",
+      "   返却される情報:",
+      "   - host: Aurora cluster endpoint",
+      "   - port: ポート番号 (通常 5432)",
+      "   - username: データベースユーザー名",
+      "   - password: データベースパスワード",
+      "   - dbname: データベース名",
+      "",
+      "3. 手動で接続する場合:",
+      "   上記のコマンドで取得した情報を使用:",
+      "   PGPASSWORD='<password>' psql -h <host> -p <port> -U <username> -d <dbname>",
       "",
       "4. pgvector 拡張の確認:",
       "   接続後、以下のコマンドを実行:",
       "   SELECT * FROM pg_extension WHERE extname = 'vector';",
+      "",
+      "5. Bedrock Knowledge Base用のテーブル確認:",
+      "   \\dt bedrock_integration.*",
+      "   SELECT count(*) FROM bedrock_integration.bedrock_kb;",
       "EOF",
       "",
       "chown ec2-user:ec2-user /home/ec2-user/README.txt",
@@ -203,9 +207,9 @@ export class BastionStack extends cdk.Stack {
         "Command to connect to Aurora PostgreSQL (run after SSM connection)",
     });
 
-    new CfnOutput(this, "AuroraEndpoint", {
-      value: auroraEndpoint,
-      description: "Aurora cluster endpoint",
+    new CfnOutput(this, "AuroraSecretCommand", {
+      value: `aws secretsmanager get-secret-value --secret-id ${auroraSecretArn} --query SecretString --output text | jq`,
+      description: "Command to get Aurora credentials from Secrets Manager",
     });
   }
 }
