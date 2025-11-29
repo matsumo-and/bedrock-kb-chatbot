@@ -24,6 +24,7 @@ import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { myProvider } from "@/lib/ai/providers";
 import { getWeather } from "@/lib/ai/tools/get-weather";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
+import { searchKnowledgeBase } from "@/lib/ai/tools/search-knowledge-base";
 import { isProductionEnvironment } from "@/lib/constants";
 import {
   createStreamId,
@@ -176,18 +177,16 @@ export async function POST(request: Request) {
     let finalMergedUsage: AppUsage | undefined;
 
     const stream = createUIMessageStream({
-      execute: ({ writer: dataStream }) => {
+      execute: async ({ writer: dataStream }) => {
         const result = streamText({
           model: myProvider.languageModel(selectedChatModel),
           system: systemPrompt({ selectedChatModel, requestHints }),
           messages: convertToModelMessages(uiMessages),
           stopWhen: stepCountIs(10),
-          //TODO: add retrieved contexts
-          //experimental_context: "",
           experimental_activeTools:
             selectedChatModel === "chat-model-reasoning"
               ? []
-              : ["getWeather", "requestSuggestions"],
+              : ["getWeather", "requestSuggestions", "searchKnowledgeBase"],
           experimental_transform: smoothStream({ chunking: "word" }),
           tools: {
             getWeather,
@@ -195,6 +194,7 @@ export async function POST(request: Request) {
               session,
               dataStream,
             }),
+            searchKnowledgeBase,
           },
           experimental_telemetry: {
             isEnabled: isProductionEnvironment,
