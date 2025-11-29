@@ -2,9 +2,7 @@
 import * as cdk from "aws-cdk-lib";
 import * as dotenv from "dotenv";
 import { getConfig } from "../lib/config/environmental_config";
-import { BastionStack } from "../lib/stack/bastion-stack";
 import { AmazonBedrockKbStack } from "../lib/stack/bedrock-kb-stack";
-import { NetworkStack } from "../lib/stack/network-stack";
 import { SecretsStack } from "../lib/stack/secrets-stack";
 
 dotenv.config();
@@ -22,15 +20,6 @@ const env = {
   account: process.env.CDK_DEFAULT_ACCOUNT ?? process.env.AWS_ACCOUNT,
   region: process.env.CDK_DEFAULT_REGION ?? process.env.AWS_REGION,
 };
-
-// Network スタック（VPCとSubnetを管理）
-// VPC ID は SSM Parameter Store に格納され、他のスタックから lookup される
-new NetworkStack(app, `NetworkStack${stagePrefix}`, {
-  stage,
-  vpcCidr: config.vpc.cidr,
-  maxAzs: config.vpc.maxAzs,
-  env,
-});
 
 // Secrets スタック（認証情報を管理）
 const secretsStack = new SecretsStack(app, `SecretsStack${stagePrefix}`, {
@@ -56,26 +45,15 @@ if (!bedrockKbConfig) {
   );
 }
 
-const bedrockKbStack = new AmazonBedrockKbStack(
-  app,
-  `BedrockKbStack${stagePrefix}`,
-  {
-    stage,
-    confluence:
-      bedrockKbConfig.confluence && secretsStack.confluenceSecretArn
-        ? {
-            secretArn: secretsStack.confluenceSecretArn,
-            hostUrl: bedrockKbConfig.confluence.hostUrl,
-            spaces: bedrockKbConfig.confluence.spaces,
-          }
-        : undefined,
-    env,
-  },
-);
-
-// Bastion Host スタック
-new BastionStack(app, `BastionStack${stagePrefix}`, {
+new AmazonBedrockKbStack(app, `BedrockKbStack${stagePrefix}`, {
   stage,
-  auroraSecretArn: bedrockKbStack.vectorStore.credentialsSecretArn,
+  confluence:
+    bedrockKbConfig.confluence && secretsStack.confluenceSecretArn
+      ? {
+          secretArn: secretsStack.confluenceSecretArn,
+          hostUrl: bedrockKbConfig.confluence.hostUrl,
+          spaces: bedrockKbConfig.confluence.spaces,
+        }
+      : undefined,
   env,
 });

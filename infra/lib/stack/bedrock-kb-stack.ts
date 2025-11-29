@@ -1,15 +1,15 @@
-import { amazonaurora, bedrock } from "@cdklabs/generative-ai-cdk-constructs";
+import {
+  bedrock,
+  opensearchserverless,
+} from "@cdklabs/generative-ai-cdk-constructs";
 import * as cdk from "aws-cdk-lib";
 import {
-  aws_ec2,
   aws_s3,
   aws_secretsmanager,
-  aws_ssm,
   CfnOutput,
   Duration,
   RemovalPolicy,
 } from "aws-cdk-lib";
-import { AuroraPostgresEngineVersion } from "aws-cdk-lib/aws-rds";
 import type { Construct } from "constructs";
 
 interface BedrockKbStackProps extends cdk.StackProps {
@@ -34,8 +34,7 @@ interface BedrockKbStackProps extends cdk.StackProps {
 }
 
 export class AmazonBedrockKbStack extends cdk.Stack {
-  public readonly vectorStore: amazonaurora.AmazonAuroraVectorStore;
-  public readonly auroraClusterId: string;
+  public readonly vectorCollection: opensearchserverless.VectorCollection;
 
   constructor(scope: Construct, id: string, props: BedrockKbStackProps) {
     super(scope, id, props);
@@ -44,17 +43,6 @@ export class AmazonBedrockKbStack extends cdk.Stack {
 
     const tag = `bedrock-kb-${stage}`;
     const bucketName = `${tag}-${this.account}`;
-
-    // SSM から VPC ID を取得
-    const vpcId = aws_ssm.StringParameter.valueFromLookup(
-      this,
-      `/${tag}/vpc-id`,
-    );
-
-    // VPC ID から IVpc を取得
-    const vpc = aws_ec2.Vpc.fromLookup(this, "Vpc", {
-      vpcId: vpcId,
-    });
 
     // S3 bucket for the data source
     const dataSourceBucket = new aws_s3.Bucket(this, "DataSourceBucket", {
@@ -70,18 +58,15 @@ export class AmazonBedrockKbStack extends cdk.Stack {
       ],
     });
 
-    // Aurora cluster identifier
-    this.auroraClusterId = `${tag}-aurora-cluster`;
-
-    // AmazonAuroraVectorStore を使用して新規にAuroraクラスタとVector Storeを作成
-    this.vectorStore = new amazonaurora.AmazonAuroraVectorStore(
+    // OpenSearch Serverless Vector Collection
+    this.vectorCollection = new opensearchserverless.VectorCollection(
       this,
-      "VectorStore",
+      "VectorCollection",
       {
-        postgreSQLVersion: AuroraPostgresEngineVersion.VER_16_9,
-        embeddingsModelVectorDimension: 1024, // Titan Embed Text v2の次元数
-        vpc: vpc,
-        clusterId: this.auroraClusterId,
+        collectionName: `${tag}-collection`,
+        description: `Vector collection for ${stage} environment`,
+        standbyReplicas:
+          opensearchserverless.VectorCollectionStandbyReplicas.DISABLED, // コスト削減のため無効化
       },
     );
 
@@ -90,11 +75,11 @@ export class AmazonBedrockKbStack extends cdk.Stack {
       this,
       "KnowledgeBase",
       {
-        vectorStore: this.vectorStore,
+        vectorStore: this.vectorCollection,
         embeddingsModel:
           bedrock.BedrockFoundationModel.TITAN_EMBED_TEXT_V2_1024,
         name: `${tag}-knowledge-base`,
-        description: `Knowledge base for ${stage} environment with Aurora PostgreSQL`,
+        description: `Knowledge base for ${stage} environment with OpenSearch Serverless`,
         instruction:
           "Use this knowledge base to answer questions based on the provided documents.",
       },
@@ -151,6 +136,17 @@ export class AmazonBedrockKbStack extends cdk.Stack {
       value: dataSourceBucket.bucketName,
       description: "S3 bucket name for data sources",
       exportName: `${tag}-s3-bucket`,
+    });
+
+    new CfnOutput(this, "VectorCollectionId", {
+      value: this.vectorCollection.collectionId,
+      description: "OpenSearch Serverless Collection ID",
+      exportName: `${tag}-collection-id`,
+    });
+
+    new CfnOutput(this, "VectorCollectionEndpoint", {
+      value: this.vectorCollection.collectionEndpoint,
+      description: "OpenSearch Serverless Collection Endpoint",
     });
 
     // Output the AWS CLI commands to upload files to the S3 bucket
