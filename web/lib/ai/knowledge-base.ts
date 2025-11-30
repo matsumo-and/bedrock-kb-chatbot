@@ -34,14 +34,6 @@ export async function retrieveFromKnowledgeBase(
 ): Promise<RetrievalResult[]> {
   const kbId = knowledgeBaseId || process.env.KNOWLEDGE_BASE_ID;
 
-  // Debug: log environment variables (remove in production)
-  console.log("Environment check:", {
-    hasKnowledgeBaseId: !!process.env.KNOWLEDGE_BASE_ID,
-    hasAwsRegion: !!process.env.AWS_REGION,
-    hasAwsAccessKey: !!process.env.AWS_ACCESS_KEY_ID,
-    kbId,
-  });
-
   if (!kbId) {
     throw new Error(
       "KNOWLEDGE_BASE_ID is not configured in environment variables",
@@ -56,6 +48,16 @@ export async function retrieveFromKnowledgeBase(
     retrievalConfiguration: {
       vectorSearchConfiguration: {
         numberOfResults,
+        overrideSearchType: "HYBRID", // セマンティック + キーワード検索
+        rerankingConfiguration: {
+          type: "BEDROCK_RERANKING_MODEL",
+          bedrockRerankingConfiguration: {
+            numberOfRerankedResults: numberOfResults,
+            modelConfiguration: {
+              modelArn: `arn:aws:bedrock:${process.env.AWS_REGION}::foundation-model/cohere.rerank-v3-5:0`,
+            },
+          },
+        },
       },
     },
   };
