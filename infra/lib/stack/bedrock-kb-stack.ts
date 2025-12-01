@@ -1,3 +1,4 @@
+import * as path from "node:path";
 import {
   bedrock,
   opensearchserverless,
@@ -10,6 +11,8 @@ import {
   Duration,
   RemovalPolicy,
 } from "aws-cdk-lib";
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as nodejs from "aws-cdk-lib/aws-lambda-nodejs";
 import type { Construct } from "constructs";
 
 interface BedrockKbStackProps extends cdk.StackProps {
@@ -58,6 +61,23 @@ export class AmazonBedrockKbStack extends cdk.Stack {
       ],
     });
 
+    // S3 bucket for intermediate transformation storage
+    const transformationBucket = new aws_s3.Bucket(
+      this,
+      "TransformationBucket",
+      {
+        bucketName: `${tag}-transformation-${this.account}`,
+        removalPolicy: RemovalPolicy.DESTROY,
+        autoDeleteObjects: true,
+        lifecycleRules: [
+          {
+            id: "delete-old-transformations",
+            expiration: Duration.days(7), // 中間ファイルは7日後に削除
+          },
+        ],
+      },
+    );
+
     // OpenSearch Serverless Vector Collection
     this.vectorCollection = new opensearchserverless.VectorCollection(
       this,
@@ -69,6 +89,36 @@ export class AmazonBedrockKbStack extends cdk.Stack {
           opensearchserverless.VectorCollectionStandbyReplicas.DISABLED, // コスト削減のため無効化
       },
     );
+
+    // Custom chunking Lambda function
+    const codeChunkingLambda = new nodejs.NodejsFunction(
+      this,
+      "CodeChunkingLambda",
+      {
+        entry: path.join(__dirname, "../lambda/code-chunking/index.ts"),
+        handler: "handler",
+        runtime: lambda.Runtime.NODEJS_24_X,
+        timeout: Duration.minutes(5),
+        memorySize: 1024,
+        bundling: {
+          nodeModules: [
+            "tree-sitter",
+            "tree-sitter-typescript",
+            "tree-sitter-javascript",
+            "tree-sitter-java",
+            "tree-sitter-c-sharp",
+          ],
+          externalModules: ["@aws-sdk/client-s3"],
+        },
+        environment: {
+          TRANSFORMATION_BUCKET: transformationBucket.bucketName,
+        },
+      },
+    );
+
+    // Grant permissions to Lambda
+    dataSourceBucket.grantRead(codeChunkingLambda);
+    transformationBucket.grantReadWrite(codeChunkingLambda);
 
     // Knowledge Base の作成（IAM roleは自動作成される）
     const knowledgeBase = new bedrock.VectorKnowledgeBase(
@@ -85,13 +135,17 @@ export class AmazonBedrockKbStack extends cdk.Stack {
       },
     );
 
-    // S3 Data Source
+    // Grant Bedrock Knowledge Base role access to transformation bucket
+    transformationBucket.grantReadWrite(knowledgeBase.role);
+
+    // S3 Data Source with custom transformation
     knowledgeBase.addS3DataSource({
       bucket: dataSourceBucket,
       dataSourceName: `${tag}-s3-data-source`,
-      chunkingStrategy: bedrock.ChunkingStrategy.fixedSize({
-        maxTokens: 300,
-        overlapPercentage: 20,
+      chunkingStrategy: bedrock.ChunkingStrategy.NONE,
+      customTransformation: bedrock.CustomTransformation.lambda({
+        lambdaFunction: codeChunkingLambda,
+        s3BucketUri: `s3://${transformationBucket.bucketName}/transformations/`,
       }),
     });
 
@@ -107,6 +161,7 @@ export class AmazonBedrockKbStack extends cdk.Stack {
           "ConfluenceSecret",
           confluence.secretArn,
         ),
+        chunkingStrategy: bedrock.ChunkingStrategy.SEMANTIC,
         filters:
           confluence.spaces.length > 0
             ? [
@@ -147,6 +202,18 @@ export class AmazonBedrockKbStack extends cdk.Stack {
     new CfnOutput(this, "VectorCollectionEndpoint", {
       value: this.vectorCollection.collectionEndpoint,
       description: "OpenSearch Serverless Collection Endpoint",
+    });
+
+    new CfnOutput(this, "TransformationBucketName", {
+      value: transformationBucket.bucketName,
+      description: "S3 bucket name for transformation intermediate storage",
+      exportName: `${tag}-transformation-bucket`,
+    });
+
+    new CfnOutput(this, "CodeChunkingLambdaArn", {
+      value: codeChunkingLambda.functionArn,
+      description: "Lambda function ARN for code chunking",
+      exportName: `${tag}-chunking-lambda-arn`,
     });
 
     // Output the AWS CLI commands to upload files to the S3 bucket
