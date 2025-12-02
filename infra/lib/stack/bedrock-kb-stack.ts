@@ -5,9 +5,9 @@ import {
 } from "@cdklabs/generative-ai-cdk-constructs";
 import * as cdk from "aws-cdk-lib";
 import {
+  aws_iam,
   aws_s3,
   aws_secretsmanager,
-  aws_iam,
   CfnOutput,
   Duration,
   RemovalPolicy,

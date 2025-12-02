@@ -66,7 +66,7 @@ async function streamToString(stream: Readable): Promise<string> {
 
 // S3 URIからバケット名とキーを抽出
 function parseS3Uri(uri: string): { bucket: string; key: string } {
-  const match = uri.match(/^s3:\/\/([^\/]+)\/(.+)$/);
+  const match = uri.match(/^s3:\/\/([^/]+)\/(.+)$/);
   if (!match) {
     throw new Error(`Invalid S3 URI: ${uri}`);
   }
@@ -236,7 +236,9 @@ export const handler = async (
     // Gitメタデータを抽出
     const gitMetadata = parseGitMetadata(filePath);
     if (!gitMetadata) {
-      console.log(`Warning: Could not parse Git metadata from path: ${filePath}`);
+      console.log(
+        `Warning: Could not parse Git metadata from path: ${filePath}`,
+      );
     }
 
     // contentBatchesからコンテンツを取得（通常は1つのバッチ）
