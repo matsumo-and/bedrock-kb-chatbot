@@ -54,7 +54,8 @@ export async function retrieveFromKnowledgeBase(
           bedrockRerankingConfiguration: {
             numberOfRerankedResults: numberOfResults,
             modelConfiguration: {
-              modelArn: `arn:aws:bedrock:${process.env.AWS_REGION}::foundation-model/cohere.rerank-v3-5:0`,
+              // AWS ネイティブのリランキングモデル（サブスクリプション不要）
+              modelArn: `arn:aws:bedrock:${process.env.AWS_REGION}::foundation-model/amazon.rerank-v1:0`,
             },
           },
         },

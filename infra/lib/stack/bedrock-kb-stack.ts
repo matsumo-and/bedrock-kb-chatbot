@@ -7,6 +7,7 @@ import * as cdk from "aws-cdk-lib";
 import {
   aws_s3,
   aws_secretsmanager,
+  aws_iam,
   CfnOutput,
   Duration,
   RemovalPolicy,
@@ -137,6 +138,18 @@ export class AmazonBedrockKbStack extends cdk.Stack {
 
     // Grant Bedrock Knowledge Base role access to transformation bucket
     transformationBucket.grantReadWrite(knowledgeBase.role);
+
+    // Grant Bedrock reranking permission to the Knowledge Base role
+    knowledgeBase.role.addToPrincipalPolicy(
+      new aws_iam.PolicyStatement({
+        effect: aws_iam.Effect.ALLOW,
+        actions: ["bedrock:Rerank", "bedrock:InvokeModel"],
+        resources: [
+          // Allow reranking with any model (Rerank doesn't support resource-level permissions)
+          "*",
+        ],
+      }),
+    );
 
     // S3 Data Source with custom transformation
     knowledgeBase.addS3DataSource({
