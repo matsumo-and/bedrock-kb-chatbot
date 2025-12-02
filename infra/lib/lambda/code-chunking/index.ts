@@ -73,6 +73,26 @@ function parseS3Uri(uri: string): { bucket: string; key: string } {
   return { bucket: match[1], key: match[2] };
 }
 
+// S3 key から Git メタデータを抽出
+// 想定フォーマット: provider/org/repository/src/...
+function parseGitMetadata(s3Key: string): {
+  gitProvider: string;
+  gitOrganization: string;
+  gitRepository: string;
+} | null {
+  const parts = s3Key.split("/");
+
+  if (parts.length < 3) {
+    return null;
+  }
+
+  return {
+    gitProvider: parts[0],
+    gitOrganization: parts[1],
+    gitRepository: parts[2],
+  };
+}
+
 // コンテンツバッチからソースコードを取得
 async function getContentFromBatch(
   bucketName: string,
@@ -126,6 +146,11 @@ function detectLanguage(filePath: string): SupportedLanguage | "text" | null {
 function chunkTextByParagraph(
   content: string,
   filePath: string,
+  gitMetadata: {
+    gitProvider: string;
+    gitOrganization: string;
+    gitRepository: string;
+  } | null,
   maxChunkSize = 1000,
 ): Array<{ text: string; metadata: Record<string, string> }> {
   const chunks: Array<{ text: string; metadata: Record<string, string> }> = [];
@@ -145,14 +170,22 @@ function chunkTextByParagraph(
       currentChunk.length > 0 &&
       currentChunk.length + paragraph.length > maxChunkSize
     ) {
+      const metadata: Record<string, string> = {
+        filePath,
+        type: "text",
+        startLine: chunkStartLine.toString(),
+        endLine: (currentLine - 1).toString(),
+      };
+
+      if (gitMetadata) {
+        metadata.gitProvider = gitMetadata.gitProvider;
+        metadata.gitOrganization = gitMetadata.gitOrganization;
+        metadata.gitRepository = gitMetadata.gitRepository;
+      }
+
       chunks.push({
         text: currentChunk.trim(),
-        metadata: {
-          filePath,
-          type: "text",
-          startLine: chunkStartLine.toString(),
-          endLine: (currentLine - 1).toString(),
-        },
+        metadata,
       });
 
       currentChunk = "";
@@ -164,14 +197,22 @@ function chunkTextByParagraph(
   }
 
   if (currentChunk.trim().length > 0) {
+    const metadata: Record<string, string> = {
+      filePath,
+      type: "text",
+      startLine: chunkStartLine.toString(),
+      endLine: currentLine.toString(),
+    };
+
+    if (gitMetadata) {
+      metadata.gitProvider = gitMetadata.gitProvider;
+      metadata.gitOrganization = gitMetadata.gitOrganization;
+      metadata.gitRepository = gitMetadata.gitRepository;
+    }
+
     chunks.push({
       text: currentChunk.trim(),
-      metadata: {
-        filePath,
-        type: "text",
-        startLine: chunkStartLine.toString(),
-        endLine: currentLine.toString(),
-      },
+      metadata,
     });
   }
 
@@ -191,6 +232,12 @@ export const handler = async (
     const { key: filePath } = parseS3Uri(s3Uri);
 
     console.log(`Processing file: ${filePath}`);
+
+    // Gitメタデータを抽出
+    const gitMetadata = parseGitMetadata(filePath);
+    if (!gitMetadata) {
+      console.log(`Warning: Could not parse Git metadata from path: ${filePath}`);
+    }
 
     // contentBatchesからコンテンツを取得（通常は1つのバッチ）
     let sourceCode = "";
@@ -215,7 +262,7 @@ export const handler = async (
       chunks = [];
     } else if (language === "text") {
       console.log(`Chunking ${filePath} as text`);
-      chunks = chunkTextByParagraph(sourceCode, filePath);
+      chunks = chunkTextByParagraph(sourceCode, filePath, gitMetadata);
       console.log(`Generated ${chunks.length} text chunks`);
     } else {
       // tree-sitterでチャンキング
@@ -229,21 +276,32 @@ export const handler = async (
         console.log(
           `No code chunks found, falling back to text chunking for ${filePath}`,
         );
-        chunks = chunkTextByParagraph(sourceCode, filePath);
+        chunks = chunkTextByParagraph(sourceCode, filePath, gitMetadata);
         console.log(`Generated ${chunks.length} text chunks (fallback)`);
       } else {
         // Code chunks を変換
-        chunks = codeChunks.map((chunk) => ({
-          text: chunk.content,
-          metadata: {
+        chunks = codeChunks.map((chunk) => {
+          const metadata: Record<string, string> = {
             language: chunk.metadata.language,
             filePath: chunk.metadata.filePath,
             type: chunk.metadata.type,
             name: chunk.metadata.name || "",
             startLine: chunk.metadata.startLine.toString(),
             endLine: chunk.metadata.endLine.toString(),
-          },
-        }));
+          };
+
+          // Gitメタデータを追加
+          if (gitMetadata) {
+            metadata.gitProvider = gitMetadata.gitProvider;
+            metadata.gitOrganization = gitMetadata.gitOrganization;
+            metadata.gitRepository = gitMetadata.gitRepository;
+          }
+
+          return {
+            text: chunk.content,
+            metadata,
+          };
+        });
       }
     }
 
